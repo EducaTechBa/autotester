@@ -184,11 +184,8 @@ function process_program($task, $program_id) {
 
  	if (!$stop_testing)
 		$k = json_query("setResult", array("id" => $program_id, "client" => $clientId, "result" => json_encode($result)), "POST" );
-//		file_put_contents("kk/result.json", json_encode($result, JSON_PRETTY_PRINT));
 	else
 		Utils::debugLog( "Stop testing per request from server", 1 );
-
-		print_r($k);
 		
 } // End process_program
 
