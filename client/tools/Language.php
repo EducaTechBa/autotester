@@ -51,7 +51,7 @@ class Language {
 	
 	// Default implementation of parse does nothing
 	public function parse($options) {
-		return array( "success" => true, "symbols" => [] );
+		return array( "success" => true, "symbols" => array() );
 	}
 	
 	

@@ -30,7 +30,7 @@ class Gcc extends ExternalTool {
 		$compiler_output = explode("\n", $this->result['output']);
 		$current_message = array();
 		$state = "";
-		$this->result['parsed_output'] = [];
+		$this->result['parsed_output'] = array();
 
 		foreach($compiler_output as $line) {
 			$matches = array();

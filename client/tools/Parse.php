@@ -25,7 +25,7 @@ require_once("tools/Language.php");
 class Parse extends AbstractTool {
 	public function run() {
 		// Use Lanaguage::parse (or subclass, if available)
-		$plugin = Utils::findPlugin( "language", $this->test->task->language, "", [ "test" => $this->test, "tool" => $this ] );
+		$plugin = Utils::findPlugin( "language", $this->test->task->language, "", array( "test" => $this->test, "tool" => $this ) );
 		$this->result = $plugin->parse( $this->properties );
 	}
 }

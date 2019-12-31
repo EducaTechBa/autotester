@@ -194,7 +194,7 @@ class Test {
 	// Since tool->result['status'] can be changed, we pass by reference
 	protected function checkOutput(&$tool) {
 		$output = $tool->result['output'];
-		$expecteds = $fails = [];
+		$expecteds = $fails = array();
 		if (array_key_exists("expect", $tool->properties))
 			$expecteds = $tool->properties['expect'];
 		if (array_key_exists("fail", $tool->properties))

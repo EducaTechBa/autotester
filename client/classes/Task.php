@@ -29,7 +29,7 @@ class Task {
 	private $result;
 	public $afterEachTest = "";
 	
-	public function __construct($taskDesc, $program = []) {
+	public function __construct($taskDesc, $program = array()) {
 		global $conf_verbosity;
 		
 		if (!array_key_exists('name', $taskDesc)) $taskDesc['name'] = "";
@@ -205,7 +205,7 @@ class Task {
 				"id" => $buildhost_id, 
 				"os" => Utils::getOsVersion()
 			),
-			"tools" => [],
+			"tools" => array(),
 			"status" => PROGRAM_CURRENTLY_TESTING
 		);
 		

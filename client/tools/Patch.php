@@ -44,7 +44,7 @@ class Patch extends AbstractTool {
 	public function run() {
 		// Use Lanaguage::patch (or subclass, if available)
 		$this->result = array( "success" => "false", "message" => "Nothing to do" );
-		$plugin = Utils::findPlugin( "language", $this->test->task->language, "", [ "test" => $this->test, "tool" => $this ] );
+		$plugin = Utils::findPlugin( "language", $this->test->task->language, "", array( "test" => $this->test, "tool" => $this ) );
 		foreach($this->properties as $options) {
 			$this->result = $plugin->patch( $options );
 			if (!$this->result['success']) break;

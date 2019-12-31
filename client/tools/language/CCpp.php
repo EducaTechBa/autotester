@@ -21,7 +21,7 @@
 
 
 class CCpp extends Language {
-	private $symbols = [];
+	private $symbols = array();
 	
 	// Find file with main function
 	public function findPrimaryFile() {
@@ -53,7 +53,7 @@ class CCpp extends Language {
 	
 	// Parse for C and C++
 	public function parse($options) {
-		$found_subst = $all_symbols = [];
+		$found_subst = $all_symbols = array();
 		foreach($this->test->sourceFiles as $file) {
 			// Parse file
 			$content = file_get_contents($file);
@@ -116,7 +116,7 @@ class CCpp extends Language {
 					return array( "success" => false, "message" => "Found forbidden symbol $symbol", "symbols" => $all_symbols );
 		
 		// Remove paths from symbols array
-		$symbols_return = [];
+		$symbols_return = array();
 		foreach($this->symbols as $key => $value)
 			$symbols_return[basename($key)] = $value;
 		

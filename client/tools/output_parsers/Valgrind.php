@@ -31,7 +31,7 @@ class Valgrind extends ExternalTool {
 		
 		$profiler_output = explode("\n", $this->result['output']);
 		$alLocation = false;
-		$current_message = $parsed_output = [];
+		$current_message = $parsed_output = array();
 	
 		$message_strings = array( 
 			array ( "msg" => "Invalid read of size", "status" => PROFILER_OOB), 

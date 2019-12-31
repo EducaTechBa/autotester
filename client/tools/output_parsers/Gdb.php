@@ -52,6 +52,6 @@ class Gdb extends Debug { // We must inherit Debug for core file processing
 				}
 			}
 		}
-		$this->result['parsed_output'] = [ $msg ];
+		$this->result['parsed_output'] = array( $msg );
 	}
 }
