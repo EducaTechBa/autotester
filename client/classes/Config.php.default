@@ -213,7 +213,7 @@ $conf_tools = array(
 		array(
 			"name" => "valgrind",
 			"path" => "valgrind",
-			"cmd" => "{path} {executable}",
+			"cmd" => "{path} {options} {executable}",
 			"options" => "", // add options that need to be passed every time
 			"inherit" => "execute",
 			"features" => array(
