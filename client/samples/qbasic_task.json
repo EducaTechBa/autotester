@@ -1,0 +1,29 @@
+{
+    "id": 5442,
+    "name": "Sample QBasic task",
+    "languages": [ "QBasic" ],
+    "tools" : {
+        "compile" : {}, 
+        "execute" : {
+            "environment" : {
+                "timeout" : 10,
+                "memory" : 1000000
+            }
+        }
+    },
+    "tests": [
+        {
+            "id": 1,
+            "patch" : [{}],
+            "compile" : {},
+            "execute" : {
+                "environment" : {
+                    "stdin" : "John"
+                },
+                "expect": [
+                    "Please enter your name: Hello, John"
+                ]
+            }
+        }
+    ]
+}

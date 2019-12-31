@@ -1,0 +1,29 @@
+{
+    "id": 5443,
+    "name": "Sample QBasic, C and C++ task",
+    "languages": [ "QBasic", "C", "C++" ],
+    "tools" : {
+        "compile" : {}, 
+        "execute" : {
+            "environment" : {
+                "timeout" : 10,
+                "memory" : 1000000
+            }
+        }
+    },
+    "tests": [
+        {
+            "id": 1,
+            "patch" : [{}],
+            "compile" : {},
+            "execute" : {
+                "environment" : {
+                    "stdin" : "John"
+                },
+                "expect": [
+                    "Please enter your name: Hello, John"
+                ]
+            }
+        }
+    ]
+}

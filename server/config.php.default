@@ -1,0 +1,97 @@
+<?php
+
+// AUTOTESTER - automated compiling, execution, debugging, testing and profiling
+// (c) Vedran Ljubovic and others 2014.
+//
+//     This program is free software: you can redistribute it and/or modify
+//     it under the terms of the GNU General Public License as published by
+//     the Free Software Foundation, either version 3 of the License, or
+//     (at your option) any later version.
+// 
+//     This program is distributed in the hope that it will be useful,
+//     but WITHOUT ANY WARRANTY; without even the implied warranty of
+//     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//     GNU General Public License for more details.
+// 
+//     You should have received a copy of the GNU General Public License
+//     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+// autotester server configuration
+
+
+
+// ----------------------------
+// COMMON settings
+// ----------------------------
+
+// Commands and paths
+
+$conf_tmp_path = "/tmp";
+// Base directory for all files related to buildservice
+$conf_basepath = "/tmp/buildservice";
+$conf_unzip_command = "unzip";
+
+
+
+
+// ----------------------------
+// PUSH settings
+// ----------------------------
+
+
+// Timeout after which tasks will become reassigned to other clients (in seconds)
+// Set to 0 to prevent timeout
+$conf_client_timeout = 300;
+
+
+// Awake clients in hibernate mode if all registered clients have exceeded timeout
+$conf_autowake = true;
+
+
+// Which users are allowed to submit new tasks
+$conf_allow_push = array(
+	// Set this to true to disable push entirely
+	// "disabled" => true,
+	
+	// Require http basic auth. If set to true all users are allowed 
+	// (but need to authenticate). If set to false, auth is not required.
+	// Otherwise an array of allowed users. Default: false
+	// "http_auth" => false,
+
+	// Require valid PHP session. If set to true, require an active
+	// session, false doesn't require a session. Otherwise an array of
+	// session variables in the form "name" => "expected value", or
+	// "exists_name" => true (which means that variable must exist). 
+	// Default: false
+	// "php_session" => false,
+	
+	// List of allowed remote hosts, or false if all hosts are allowed.
+	// Default: false
+	// "hosts" => false,
+);
+
+// Which users are allowed to pull existing tasks from PUSH.PHP service
+$conf_allow_pull = array(
+	// Set this to true to disable pulling (pointless?)
+	// "disabled" => true,
+	
+	// Require http basic auth. If set to true all users are allowed 
+	// (but need to authenticate). If set to false, auth is not required.
+	// Otherwise an array of allowed users. Default: false
+	// "http_auth" => false,
+
+	// Require some predefined value(s) - such as a login - in PHP session.
+	// If set to false, a session is not required. Otherwise an array of
+	// session variables in the form "name" => "expected value", or 
+	// "exists_name" => true (which means that variable must exist 
+	// regardless of value). Expected value can also be an array of
+	// expected values. Default: false
+	// "php_session" => false,
+	
+	// List of allowed remote hostnames / IP addresses, or false if all 
+	// hosts are allowed. Default: false
+	// "hosts" => false,
+);
+
+
+?>

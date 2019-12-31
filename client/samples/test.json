@@ -1,0 +1,48 @@
+{
+    "id": 5524,
+    "name": "Tehnike programiranja (2017\/2018), Zada\u0107a 6, zadatak 1",
+    "languages": [ "C++" ],
+    "tools" : {
+        "compile" : {
+            "require" : "g++",
+            "features" : [ "C++11", "optimize", "warn", "pedantic" ]
+        },
+        "compile[debug]" :
+        {
+            "require" : "g++",
+            "features" : [ "C++11", "debug" ]
+        },
+        "execute" :
+        {
+            "environment" : {
+                "timeout" : 10,
+                "memory" : 1000000
+            }
+        },
+        "debug" : {}, 
+        "profile[memcheck]" : {
+            "require" : "valgrind",
+            "features" : [ "memcheck" ]
+        },
+        "profile[sgcheck]" : {
+            "require" : "valgrind",
+            "features" : [ "sgcheck" ]
+        }
+    },
+    "tests": [
+        {
+            "id": 13,
+            "patch" : {
+                "position" : "main",
+                "code": "Skladiste ETF;\nETF.DodajSanduk(50, \"Voce\", {1,3,5,6});\nETF.DodajVrecu(0.1, \"Brasno\", 25.5);\nETF.DodajBure(5, \"Krv\", 1300, 150);\nSkladiste ETF1(ETF);\nSkladiste ETF2;\nETF2 = ETF1;\nETF2.IzlistajSkladiste();"
+            },
+            "compile" : {},
+            "execute": {
+                "expect": [
+                   "Vrsta spremnika: Bure\nSadrzaj: Krv\nVlastita tezina: 5 (kg)\nSpecificna tezina tecnosti: 1300 (kg\/m^3)\nZapremina tecnosti: 150 (l)\nUkupna tezina: 200 (kg)\nVrsta spremnika: Sanduk\nSadrzaj: Voce\nTezine predmeta: 1 3 5 6 (kg)\nVlastita tezina: 50 (kg)\nUkupna tezina: 65 (kg)\nVrsta spremnika: Vreca\nSadrzaj: Brasno\nVlastita tezina: 0.1 (kg)\nTezina pohranjene materije: 25.5 (kg)\nUkupna tezina: 25.6 (kg)"
+                 ]
+            },
+            "debug" : {}, "profile[memcheck]" : {}, "profile[sgcheck]" : {}
+        }
+    ]
+}

@@ -1,0 +1,264 @@
+Server API specification
+========================
+
+
+Server is implemented as a single PHP script called push.php. All methods are implemented via GET parameter named "action". This could easily be translated into RESTful URLs, but I can't be bothered to do it.
+
+API endpoints expect either JSON or a collection of get/post values. Output is a JSON-encoded object which always contains a boolean field "success". If "success" is true, return value (if any) will be given in the field named "data". So, if specification below states that an endpoint returns an object, this object will actually be associated with the key named "data".
+
+If "success" is false, there will be a field named "message" containing a human-readable description of the error, and a field named "code" which contains a numeric code for error (all codes are listed at the end of this document).
+
+
+Core concepts
+=============
+
+Test is a sequence of operations to be performed on a program i.e. "compile, run with these inputs, check if output matches expected".
+
+Task is a collection of tests that are rutinely performed on programs in certain group.
+
+Program is a sourcecode archive thas is submitted so that a task can be performed on it.
+
+
+Actions
+=======
+
+Beneath each action is its description, request type, parameters and return value.
+
+
+* setTask (POST)
+
+  Creates a new task or updates existing one. Returned value is task id. // ? , or "false" if a task can't be created. Parameters:
+  
+  * task : JSON-encoded object
+  
+    This is a description of task per "task description specification" (see docs). 
+    
+    Field "id" is optional. If it is ommitted, empty or zero, new task will be created and the server will assign a random free integer as id. If id is specified, server will overwrite any existing task with given id. Any remaining programs in queue can be tested with old or new task description, so good practice is to retest all (see retestTask).
+  
+* getTask (GET)
+
+  Returns task description for task with given id, or ERR004 if id is unknown.
+  
+  * id : string
+  
+* setProgram (POST)
+
+  Creates a new program or updates existing one. Returned value is program id, or ERR004 if task doesn't exist. The program will NOT be placed into queue until you call setProgramFile.
+
+  * program : JSON-encoded object
+  
+    This object contains the following key-value pairs
+  
+    * id : string (optional)
+
+      Program id. It it is ommitted, empty or zero, new program will be created and the server will assign a random free integer as id. If id is specified, server will overwrite existing program description and file (useful when file is changed). If program is still in queue, it will be changed before testing, and if not it will be requeued.
+    
+    * name : string (optional)
+  
+      A description of program that is displayed in various UIs.
+    
+    * lanaguage : string (optional)
+  
+      Name of programming language. If not specified, server will use the first language in task description.
+    
+    * task : string (mandatory)
+    
+      id of task which will be used to test this program.
+  
+* setProgramFile (POST)
+
+  Sets ZIP file corresponding to the program and puts the program into queue. For programming convenience, service expects "multipart/form-data" field named "program". Server doesn't check if the forwarded file is a proper InfoZIP archive. Note that if submitted zip is exactly the same as existing one, program will NOT be tested again (placed into queue). If you want to retest, use "retest".
+  
+  * id : string
+  
+    Program id.
+    
+  * program : file
+  
+    Uploaded file. "multipart/form-data" request type is used for programming convenience. This file should be a single InfoZIP archive containing all of the individual source files and resources needed to compile the program. 
+  
+* getProgram (GET)
+
+  Returns a JSON object containing information about program (see: setProgram), or false if no such program exists. Parameters:
+  
+  * id : string
+  
+    Program id.
+    
+* getProgramFile (GET)
+
+  Returns a file corresponding to program as a binary dump, or string "false" if no such program exists. Parameters:
+  
+  * program : string
+
+    Program id.
+   
+* getResult (GET)
+
+  Returns a JSON encoded object with testing results for a program. Note that this result can be partial or empty (as indicated by the field "status"). In case the program is still avaiting tests, field queue_items will give an estimate of the total number of programs still waiting in queue.
+  
+  * program : string
+  
+    Program id.
+
+* retest (POST)    
+
+  Place a program back into queue for retesting.
+  
+  * task : string
+  
+    Task id.
+  
+  * program : string
+  
+    Program id.  
+
+* retestTask (POST)
+
+  Place all programs for given task back into queue so that they will be tested again. If you wish to retest individual program, use retest action.
+  
+  * task : string
+  
+    Task id.
+  
+
+The following actions are intended to be used by the pull.php client:
+
+* registerClient (POST)
+
+  Registers a client as active with server. Returned value is client id or false if client can't be registered.
+  
+  * client : JSON-encoded object
+  
+    Object which contains the following data:
+    
+    * id : string (optional)
+    
+      Unique client id. If not provided, server will assign a random integer.
+      
+    * hostname : string (optional)
+    
+      The name that client wants to be known as.
+      
+    * os : string (optional)
+    
+      Details about client operating system.
+      
+* unregisterClient (POST)
+
+  Remove client from list of known clients
+  
+  * client : string
+  
+    Client id.
+
+* ping (GET)
+
+  Client will send a ping request periodically and may receive one of the following responses:
+  
+  * clear - no tasks awaiting in queue
+  * go - there are tasks in queue
+  * hibernate - server kindly requests that client goes into "hibernate mode" where it just pings but doesn't build anything
+  * awake - server kindly requests that client awakes from "hibernate mode"
+  
+  Parameters:
+  
+  * client : string
+  
+    Client id.
+  
+* nextTask (GET)
+
+  Returns id of the next task in queue. This allows the client to process all programs in task before switching to a different task.
+   
+  Parameters:
+  
+  * client : string
+  
+    Client id.
+  
+* rejectTask (POST)
+
+  Let server know that this client can't build this task.
+   
+  Parameters:
+  
+  * client : string
+  
+    Client id.
+  
+  * task : string
+  
+    Task id.
+  
+* assignProgram (GET)
+
+  Returns id of the next program in queue for given task. If there are no programs in queue, returns false. More importantly, program with this id is internally assigned to current client so that other clients can't get it for testing. 
+  
+  * task : string
+  
+    Task id.
+    
+  * client : string
+  
+    Client id.
+  
+* setResult (POST)
+
+  Sets the building result for task. Note that client can use the field "status" to update result data partially, so that frontend can display a progress information. Setting status PROGRAM_REJECTED will notify the server that it is no longer assigned and other client can build it. If the server responds with string "please_stop" in data section, client should stop testing.
+  
+  * client : string
+  
+    Client id.
+  
+  * program : string
+  
+    id of program being tested.
+    
+  * result : JSON-encoded object
+  
+    Result data as per result specification.
+  
+
+The following actions are generally informative actions for querying the situation on the server.
+    
+* listTasks (GET)
+
+  Returns a JSON object listing ids and names of all the tasks known to server. 
+  
+* listPrograms (GET)
+
+  Returns a JSON object listing ids and names of all programs for given tasks known to server. Third field is "status" which can be one of: "queued", "assigned" and "finished". 
+  
+  * task : string
+  
+  id of task.
+
+* listClients (GET)
+
+  Returns a JSON object listing all currently active clients with their last access times.
+  
+* getQueue (GET)
+
+  Returns a JSON object with ids and names of all programs that are currrently queued (unprocessed).
+  
+* getAssigned (GET)
+
+  Returns a JSON object with ids and names of all programs that are currrently assigned to a client (in status assigned). Third field is id of host that has the program.
+  
+* getStats (GET)
+
+  Lightweight service that simply returns a number of programs in each cathegory (queued, assigned, finished)
+
+  
+Error codes
+===========
+
+* ERR001 - Access denied. API requires authentication, and none was provided or the password was wrong.
+* ERR002 - Configuration error. server is permanently unavailable. Contact the system administrator.
+* ERR003 - Malformed JSON. Web service was expecting JSON data, however, received data is malformed.
+* ERR004 - Unknown task. Task id that is passed doesn't correspond to any known task.
+* ERR005 - Unknown program. Program id that is passed doesn't correspond to any known task.
+* ERR006 - Upload failed
+* ERR007 - Unknown client. Client ID that is submitted doesn't correspond to a known client.
+* ERR099 - Server configuration error.

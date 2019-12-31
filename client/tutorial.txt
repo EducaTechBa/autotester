@@ -1,0 +1,390 @@
+Task description specification
+==============================
+
+Task specification consists of three parts:
+* metadata
+* tools
+* tests
+
+Task metadata
+=============
+
+* id : int
+
+  Unique ID for task file on a given buildservice server. If this is not set, buildservice will find the first available id and use it. Otherwise, task with given id will be overwritten (attention!)
+
+* name : string
+
+  Task description to be displayed on various ui's.
+  
+* languages : array of strings
+
+  Programming language(s) of task. Currently supported languages are: C, C++, Java, Python, PHP, HTML, JavaScript and Matlab.
+
+* tools : object
+
+  List of buildservice tools that will be used for performing various tests. Tools can be external programs or internal buildservice plugins (see Tools chapter below). If a build host doesn't support all of the tools listed here it will reject the task. In addition, you can specify some global options that apply to all of the tests.
+  
+  Another thing that can be done in the tools section is to configure an alias for tool. You can have multiple aliases for the same tool with different configuration options, so that in the tests you can just invoke the desired alias. Aliases are created by adding a random string inside square braces. Example:
+  
+    "tools" : {
+        "compile" : {
+            "require" : "g++",
+            "features" : [ "C++11", "optimize", "warn", "pedantic" ]
+        },
+        "compile[debug]" :
+        {
+            "require" : "g++",
+            "features" : [ "C++11", "debug" ]
+        },
+        "execute" :
+        {
+            "environment" : {
+                "timeout" : 10,
+                "memory" : 1000000
+            }
+        },
+        "debug" : {}, 
+        "profile[memcheck]" : {
+            "require" : "valgrind",
+            "features" : [ "memcheck" ]
+        },
+        "profile[sgcheck]" : {
+            "require" : "valgrind",
+            "features" : [ "sgcheck" ]
+        }
+    },
+
+  Here you can see that "compile" and "compile[debug]" are both aliases for compile tool, one with optimizations and warnings and the other with debugging options.
+ 
+  
+* tests : array of objects
+
+  List of individual tests that will be performed on source code. Each test consists of a list of tools that will be run in sequence over the submitted folder.
+  
+  Tools are applied in sequence. If any of the tools "fails" (exact condition for failure depends on the tool), the test is considered as failed and the rest of the tools in this list are not executed. The only exception is that if the "execute" tool results in a crash, "debug" tool will also be executed to analyse the core dump file (if any), but the test is still declared as failed.
+
+  In addition to list of tool names/aliases, each test has the following fields:
+  
+    * id : int
+    
+      Unique id within this task file. Tests are applied in the order of their ids, so you can manipulate ids to reorder tests.
+      
+    * name : string
+    
+      Descriptive name to be displayed in ui. By default it is "Test N" where N is ordinal number of test.
+      
+    * options : array
+    
+      List of strings that control how this test should be processed. Available options are:
+      
+        * nodetail : test results will contain no information other then whether test passed or failed
+        * silent : test results will skip this test completely (overrides "nodetail")
+        * terminate : if this test fails, further tests are not executed
+        * reuse : normally, the whole tree is deleted after each test and a new one is created; but if reuse option is passed, tests will be executed in the same folder which is useful e.g. for sequential testing of file-related operations
+        
+
+  Example of a single test would look like this:
+  
+        {
+            "id": 6,
+            "patch" : {
+                "position" : "main",
+                "code" : "try\n    {\n\n        Skladiste ETF;\n        ETF.DodajSanduk(50, \"Voce\", {1,3,5,6});\n        ETF.DodajVrecu(0.1, \"Brasno\", 25.5);\n        ETF.DodajBure(5, \"Krv\", 1300, 150);\n        ETF.DodajSpremnik(new Vreca(0.5, \"Secer\", 40), true);\n        Bure *b = new Bure(15, \"Voda\", 1000, 200);\n        ETF.DodajSpremnik(b, false);\n        delete b;\n        ETF.IzlistajSkladiste();\n\n    }\n    catch(std::range_error re)\n    {\n        std::cout << re.what();\n    }"
+            },
+            "compile" : {},
+            "execute": {
+                "expect": [
+                    "Vrsta spremnika: Bure\nSadrzaj: Voda\nVlastita tezina: 15 (kg)\nSpecificna tezina tecnosti: 1000 (kg\/m^3)\nZapremina tecnosti: 200 (l)\nUkupna tezina: 215 (kg)\nVrsta spremnika: Bure\nSadrzaj: Krv\nVlastita tezina: 5 (kg)\nSpecificna tezina tecnosti: 1300 (kg\/m^3)\nZapremina tecnosti: 150 (l)\nUkupna tezina: 200 (kg)\nVrsta spremnika: Sanduk\nSadrzaj: Voce\nTezine predmeta: 1 3 5 6 (kg)\nVlastita tezina: 50 (kg)\nUkupna tezina: 65 (kg)\nVrsta spremnika: Vreca\nSadrzaj: Secer\nVlastita tezina: 0.5 (kg)\nTezina pohranjene materije: 40 (kg)\nUkupna tezina: 40.5 (kg)\nVrsta spremnika: Vreca\nSadrzaj: Brasno\nVlastita tezina: 0.1 (kg)\nTezina pohranjene materije: 25.5 (kg)\nUkupna tezina: 25.6 (kg)"
+                ]
+            },
+            "debug" : {}, "profile[memcheck]" : {}, "profile[sgcheck]" : {}, "options" : [ "nodetail", "reuse" ]
+        },
+
+        
+        
+Tools
+=====
+
+A tool is an external executable present on buildhost, along with configuration, parameters etc. Using Config.php file, you can create your own tools and give them names and kinds as you want. For details on editing Config.php and creating new tools see config.txt file.
+
+All tools have certain common parameters that can be provided in task specification:
+
+  * require : string
+    
+    The tool with this exact name will be used if present on the build host, otherwise build host will reject the task. Example:
+
+      "languages" : [ "C++" ],
+      "tools" : {
+        "compile" : {
+            "require" : "g++",
+        },
+      },
+
+    This task will be rejected unless buildhost has g++ compiler, even if it has some other C++ compiler such as clang++
+
+  * prefer : string
+    
+    If the tool with this exact name is available on the build host, it will be used. Otherwise, the first tool of the kind will be used. "require" overrides "prefer".  Example:
+
+      "languages" : [ "C++" ],
+      "tools" : {
+        "compile" : {
+            "prefer" : "g++",
+        },
+      },
+
+    If buildhost has a g++ compiler it will be used. Otherwise, any eligible C++ compiler will be used. If buildhost has no C++ compiler, the task will be rejected.
+    
+  * features : array of strings
+    
+    List of strings will be compared against the features available for each tool on the build host and only the tool that has all the features will be used. This can be used to control for tool versions, language standards, etc. It's also useful for adding command line options. Example:
+    
+        "compile" : {
+            "require" : "g++",
+            "features" : [ "C++11", "optimize", "warn", "pedantic" ]
+        },
+
+    Buildhost will reject the task if it has no g++ compiler, or if its g++ compiler lacks any of the features listed.
+  
+  * options : string
+    
+    This string is added verbatim to the command line used to start the tool. Useful only with "require". Example:
+    
+        "compile" : {
+            "require" : "g++",
+            "options" : "-O1 -lm"
+        },
+  
+    In addition to the options specified in buildhost Config.php, compiler will use options "-O1 -lm" (mind that some options can cause a conflict). Normally you should never use "options" and instead try to achieve a desired effect with "features". The reason is that "features" should work on all versions of all compilers for a given language, or if the compiler doesn't support desired features the task will be rejected. Meanwhile, "options" is specific to a version of specific compiler, if there is a mismatch you will have errors and (unfortunately) failed tests.
+  
+  * environment : object
+  
+    Defines the execution environment for command. 
+  
+    * stdin : string
+    
+      This string will be piped to tool standard input. Example:
+    
+         "execute" : {
+             "environment" : {
+                 "stdin" : "John",
+             },
+             "expect" : "What is your name? Hello, John!"
+          }
+      
+    * timeout : float
+    
+      If the tool runs for longer than "timeout" seconds, it will be terminated and the test will fail.
+      
+    * memory : int
+    
+      If the tool is using more than "memory" bytes of ram, it will be terminated and the test will fail.
+      
+  * expect : array of strings
+  * fail : array of strings
+    
+    Normally, conditions for tool success/failure are given in tool configuration (typically return value other than zero). Instead of this, tool description can specify some text that is expected on standard output, and if any of array members is present the test will fail ("fail"), or if *none of them* is present the test will fail ("expected").
+      
+  * matching : enum
+    
+    This further clarifies how "expect" and "fail" fields are treated. Possible values are:
+      "full" : The whole of standard output is compared exactly against the value "expect"/"fail".
+      "invisible" (default) : Normally invisible characters are removed both from program output and from "expect"/"fail" strings before comparison. This includes whitespace at the end of lines, as well as empty lines at the beginning and end of string. Also, difference between DOS/Windows newline characters and UNIX newline characters is ignored.
+      "whitespace" : All whitespace characters are stripped both from output and the "expect"/"fail" strings before comparison.
+      "substring" : The string given in "expect"/"fail" is searched in output as a substring.
+      "regex" : The "expect"/"fail" field is parsed as a Perl-compatible regular expression.
+      
+    Note that if you wish to detect exceptions, you can wrap your test code in a try-catch block.
+    
+  * expect_crash : boolean
+    
+    If true, the test will be considered successful if the tool crashes (counter to the usual logic), as evidenced by the presence of a core dump file.
+    
+  * expect_exception : string
+  
+    Test is considered successful if provided code throws an exception. 
+    
+    If string is empty, any kind of exception is accepted, otherwise string represents exception class that is expected (works only in Java). If you want to detect the kind of exception in C++, or see exception message etc. use patch tool to write your own try-catch block. Also, this only works after using patch tool with try_catch option. If you specify both expect and expect_exception, test will succeed only if program first provides expected output, then throws expected exception.
+    
+  * merge_stderr : boolean
+    
+    If true, standard error output will be merged to standard output for "expect"/"fail" matching. Default is true. Note that tools such as compilers, profilers etc. mostly send their output to stderr.
+
+
+In addition, certain tool kinds have special parameters. Below is the list of default tool kinds configured in buildservice, along with any special parameters:
+
+  * compile
+  
+    Compile source code in given programming language into executable code (might not be required). Special options are:
+    
+      * files : array of strings
+
+        Normally, all source files (files with typical extensions) are passed to compiler. If that is not the behavior you want, pass this parameter. In C and C++ all of these files combined should have exactly one function named "main", so take care to set this parameter properly if that is not the case. Example: 
+        
+          "compile" : {
+            "files" : [ "main.cpp", "functions.cpp" ]
+          },
+        
+  * execute
+  
+    Execute the program. Options:
+
+      * executable : string
+      
+        In most compiled languages, compile tool will create an executable which is then passed automatically to execute tool. In other languages, you typically need to pass this parameter to specify which of the source files is executable. If project was not compiled and executable parameter was not passed, buildservice will look for the first file in a given programming language that can be executed.
+        
+        In Java this parameter contains the name of class to execute with full package e.g. com.company.product.MainClass. This class must contain a method with signature "public static void main(String[] args)". Example:
+        
+          "execute" : {
+            "executable" : "com.company.product.MainClass"
+          },
+
+        Another example:
+        
+          "execute" : {
+            "executable" : "src/default.py"
+          },
+        
+  * debug
+  
+    This tool is used to process the coredump file and generate a useful backtrace in case the program crashed. An example of debug tool is GNU debugger (gdb).
+    
+  * profile
+  
+    A dynamic code analysis tool (profiler) can be used to detect access to uninitialized values, array out of bounds, memory leaks, errors in pointer arithmetic etc. An example of profiler tool is Valgrind. If test was otherwise successful, profiler will set test status to TEST_PROFILER_ERROR, but in general can provide useful information even in case of crash.
+    
+  * lint (planned)
+  
+    Detect common mistakes and poor programming practices in source code. If test was otherwise successful, lint will set test status to TEST_LINT_ERROR, but in general it can provide useful information in case of other errors.
+    
+  * http (planned)
+  
+    http tool allows to perform common HTTP operations. Supported options are:
+    
+      * url : string (mandatory)
+      
+        URL of resource you wish to contact.
+        
+      * params : object
+      
+        Object with keys and values to be passed in POST request.
+        
+      * action : string
+      
+        One of: "get", "post" and "put". Default is "get".
+        
+      * download : string
+      
+        If this option is given, results of the request (such as html or json code or downloaded file) will be stored in a file with given name inside test code tree. This allows to keep a test file on a web server and fetch it for each test. If parameter is ommitted, results of HTTP request will be ignored.
+        
+      * cache : integer
+      
+        If parameter is given, results of requests are cached for faster execution for the specified amount of minutes. If value is 0 cache is valid forever (you have to manually delete files on buildhost to refetch them).
+        
+      * upload : string
+      
+        If this option is given, file will be uploaded to web service using the usual form-based upload. Value of upload parameter is filename.
+   
+    Example of http tool:
+   
+          "http" : {
+            "require" : "wget",
+            "url" : "https://myserver.domain.com/testsource.java",
+            "options" : "--no-check-certificate",
+            "save" : "testsource.java",
+            "cache" : 60
+          },
+
+
+Some tools are "internal" i.e. implemented within buildservice using php code. For these tools, the above given options do not apply, instead they have own set of options. Such tools are:
+
+  * parse 
+  
+    This tool encompasses parsers for several common programming languages which helps static code analysis. It allows you to have tests with conditions on the source code without having to compile or run the program.
+    
+    After unpacking the archive, firstly all files are gathered that have one of file extensions listed as "source files" for given programming language. If there are none, the task as a whole fails. All the source files are parsed and a list of symbols (classes, functions, variables...) is created. Here you can place additional conditions for the test based on the parser output. Note that rename/replace operations aren't cumulative, before each test the source files are restored to their original contents.
+
+         * require_symbols : array of strings
+            
+           If any of the symbols named in this list doesn't exist, the test fails.
+              
+         * ban_symbols : array of string
+            
+           If any of the symbols named in this list exists, the test fails.
+
+         * require_substrings : array of strings
+            
+           If none of the source files contains one of the substrings given in this list, the test fails.
+              
+         * ban_substrings : array of string
+            
+           If any of the source files contains one of the substrings given in this list, the test fails.
+             
+         * require_types : array of strings
+            
+           Requires one of datatypes in the list to be present in source (including the words "array of", also as a substring).
+              
+         * ban_types : array of strings
+            
+           Forbids one of datatypes in the list to be present in source (including the words "array of", also as a substring).
+           
+         * rename_symbols : object
+            
+           Rename each symbol given by key (of JSON object) with the value given.
+              
+         * replace_substrings : object
+            
+           Make a string replace in all source files, replacing object keys in the array with their values.
+
+  * patch
+
+    Patch tool allows to change the source code before test in order to affect the test execution. Value of patch tool is an array of objects with following properties:
+         
+      * code : string
+        
+        Given code will be injected into test sources at specified position.
+         
+      * position : enum
+         
+        Determines where the code will be injected. If there are multiple source files, code will be injected into file that contains main class/function (or file set as executable). If you wish to create a new file inside sourcecode, a more flexible option would be to use http tool with download option. Possible values are
+        
+         * "main" (default)
+         
+           A new function called "main" is created with given code. In languages that require all functions to be a part of a class (such as Java), a new class called "Main" will likewise be created. If a function named "main" (class named "Main") already exists, it will be renamed to "_main" ("_Main"), if a "_main" ("_Main") already exists it will be renamed to "__main" ("__Main") etc.
+           
+           The code will be enclosed into try-catch block so that unhandled exceptions can be detected separately from crashes. (da li se to konflikta sa detekcijom izuzetaka?)
+           
+         * "above_main"
+           
+           Code will be inserted just above main function but below other code that might be called from patch code. If main function is in a class, code is injected into that class (useful to add a new method, but take care of access modifiers).
+           
+         * "above_main_class"
+         
+           In languages where main function is inside a class (such as Java), this code will be injected above the class in which main resides. In other languages this value is ignored.
+           
+         * "top_of_file"
+         
+           Code will be inserted at the top of file that contains the main function
+         
+      * use_markers : boolean
+        
+        If set, the injected code will output start/end strings (markers) to prevent cheating e.g. by adding code into global scope that provides expected output without running it through mandatory class/function. This options makes sense only when position is "main". Default is false.
+        
+      * try_catch : boolean
+      
+        In languages that support exceptions (notably C++ and Java), test code will be placed inside try block. This way, if code produces an unexpected exception, test status will be TEST_UNEXPECTED_EXCEPTION as opposed to crash. Also, this allows to use "expect_exception" in execute tool. This options makes sense only when position is "main". Default is true for C++ and Java.
+
+           
+   
+Tool parsers
+============
+
+Normally, tool output (stdout) will be appended to test result so that users can process it as they wish. However, for convenient presentation, buildservice includes parsers for output of some tools. These parsers are very primitive and far from finished. We appreciate your support in improving tool parsers. At the moment we have parsers for following tools:
+
+  * gcc/g++
+  * gdb
+  * valgrind
+  
+  
+  
