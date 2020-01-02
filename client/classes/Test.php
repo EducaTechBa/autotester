@@ -211,7 +211,10 @@ class Test {
 
 				// Markers not found, but required
 				// FIXME
-				if ($prev_tool->properties[0]['use_markers'] && ($start === false || ($end === false && $except === false))) {
+				if ($prev_tool->properties[0]['use_markers'] && ($start === false || ($end === false && $except === false)) &&
+					// If program produced too much output, there will be no end marker
+					// This should be treated as "Wrong output"
+					strlen($tool->result['output']) < $tool->properties['environment']['limit_output'] - 10) {
 					$this->result['success'] = $tool->result['success'] = false;
 					$this->result['status'] = $tool->result['status'] = TEST_OUTPUT_NOT_FOUND;
 					
