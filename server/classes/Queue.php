@@ -124,7 +124,7 @@ class Queue {
 	public function nextTask($client) {
 		$client->updateLastTime();
 		for ($i=0; $i < count($this->queue); $i++) {
-			$taskId = $this->queue[0]['task'];
+			$taskId = $this->queue[$i]['task'];
 			if (!$this->isRejectedTask($taskId, $client->id))
 				return $taskId;
 		}
