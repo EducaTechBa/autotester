@@ -26,7 +26,7 @@ require_once("tools/ExternalTool.php");
 
 class Task {
 	public $language = "", $zipFile = "", $taskDesc = array(), $tools = array(), $errMsg = "";
-	private $result;
+	private $result, $lastTest = null;
 	public $afterEachTest = "";
 	
 	public function __construct($taskDesc, $program = []) {
@@ -196,6 +196,7 @@ class Task {
 				break;
 		}
 		$this->lastTest->purge();
+		$this->lastTest = null;
 	}
 
 	// Run task with all tests, return task result object, or false if task is rejected
