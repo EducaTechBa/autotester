@@ -111,6 +111,7 @@ class Client {
 		if ($clientRequestedMode) {
 			// unlink( $this->path . "/requested_mode" ); // ??
 			return $clientRequestedMode;
+		}
 		
 		$queue = new Queue;
 		if (empty($queue->queue))
