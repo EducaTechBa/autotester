@@ -230,7 +230,11 @@ function ws_parse_arguments() {
 		try {
 			$program = Program::fromId( $_REQUEST['id'] );
 		} catch(Exception $e) {
-			return array( "success" => false, "code" => "ERR005", "message" => "Unknown program" );
+			try {
+				$program = Program::fromId( $_REQUEST['program'] );
+			} catch(Exception $e) {
+				return array( "success" => false, "code" => "ERR005", "message" => "Unknown program" );
+			}
 		}
 		
 		// Suggested name for the downloaded file
@@ -256,7 +260,11 @@ function ws_parse_arguments() {
 		try {
 			$program = Program::fromId( $_REQUEST['id'] );
 		} catch(Exception $e) {
-			return array( "success" => false, "code" => "ERR005", "message" => "Unknown program" );
+			try {
+				$program = Program::fromId( $_REQUEST['program'] );
+			} catch(Exception $e) {
+				return array( "success" => false, "code" => "ERR005", "message" => "Unknown program" );
+			}
 		}
 		
 		$result = $program->getResult();
@@ -273,7 +281,11 @@ function ws_parse_arguments() {
 		try {
 			$program = Program::fromId( $_REQUEST['id'] );
 		} catch(Exception $e) {
-			return array( "success" => false, "code" => "ERR005", "message" => "Unknown program" );
+			try {
+				$program = Program::fromId( $_REQUEST['program'] );
+			} catch(Exception $e) {
+				return array( "success" => false, "code" => "ERR005", "message" => "Unknown program" );
+			}
 		}
 		$queue = new Queue;
 		$queue->add( $program->desc['task'], $program->id );
