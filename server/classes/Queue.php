@@ -49,27 +49,36 @@ class Queue {
 		$this->queueFile = $conf_basepath . "/queue";
 		if (!file_exists($this->queueFile)) return [];
 		
-		foreach(file($this->queueFile) as $line) {
-			list($task, $program, $status) = explode("/", trim($line));
-			if ($status == "Q")
-				$this->queue[] = array( "task" => $task, "program" => $program );
-			else if ($status == "F")
-				$this->finished[] = array( "task" => $task, "program" => $program );
-			else
-				$this->assigned[] = array( "task" => $task, "program" => $program, "client" => $status);
-		}
-		
-		// Read list of programs that were rejected by clients and populate attribute arrays
 		$this->rejectedFile = $conf_basepath . "/rejected";
-		if (file_exists($this->rejectedFile)) {
-			foreach(file($this->rejectedFile) as $line) {
-				list($program, $client) = explode("/", trim($line));
-				if (substr($program, 0, 1) == "T")
-					$this->rejectTask(substr($program,1), $client);
+		
+		// Read queue, with locking
+		$queueFp = fopen($this->queueFile, "r");
+		if (flock($queueFp, LOCK_SH)) {
+			while ($line = fgets($queueFp)) {
+				list($task, $program, $status) = explode("/", trim($line));
+				if ($status == "Q")
+					$this->queue[] = array( "task" => $task, "program" => $program );
+				else if ($status == "F")
+					$this->finished[] = array( "task" => $task, "program" => $program );
 				else
-					$this->reject($program, $client);
+					$this->assigned[] = array( "task" => $task, "program" => $program, "client" => $status);
 			}
+			
+			// Read list of programs that were rejected by clients and populate attribute arrays
+			if (file_exists($this->rejectedFile)) {
+				foreach(file($this->rejectedFile) as $line) {
+					list($program, $client) = explode("/", trim($line));
+					if (substr($program, 0, 1) == "T")
+						$this->rejectTask(substr($program,1), $client);
+					else
+						$this->reject($program, $client);
+				}
+			}
+			flock($queueFp, LOCK_UN);
+		} else {
+			throw new Exception("Failed to get file lock");
 		}
+		fclose($queueFp);
 		
 		// Look for clients that are not awake i.e. taking too long to respond
 		$clients = Client::listClients( true );
@@ -140,16 +149,27 @@ class Queue {
 			$output .= $item['task'] . "/" . $item['program'] . "/" . $item['client'] . "\n";
 		foreach($this->finished as $item)
 			$output .= $item['task'] . "/" . $item['program'] . "/F\n";
-		file_put_contents($this->queueFile, $output);
-		
-		$output = "";
+			
+		$rejectOutput = "";
 		foreach($this->rejected as $program => $ar)
 			foreach($ar as $client)
-				$output .= "$program/$client\n";
+				$rejectOutput .= "$program/$client\n";
 		foreach($this->rejectedTasks as $task => $ar)
 			foreach($ar as $client)
-				$output .= "T$task/$client\n";
-		file_put_contents($this->rejectedFile, $output);
+				$rejectOutput .= "T$task/$client\n";
+				
+		$queueFp = fopen($this->queueFile, "c");
+		if (flock($queueFp, LOCK_EX)) {
+			ftruncate($queueFp, 0);
+			fwrite($queueFp, $output);
+			flock($queueFp, LOCK_UN);
+		
+			// Write reject file
+			file_put_contents($this->rejectedFile, $rejectOutput);
+		} else {
+			throw new Exception("Failed to get exclusive lock for writing.");
+		}
+		fclose($queueFp);
 	}
 	
 	// Assign the next unfinished program in queue for given task id to 
