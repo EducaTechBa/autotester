@@ -38,6 +38,7 @@ class Task {
 		
 		// Find tools
 		$found = false;
+		if (array_key_exists('languages', $this->taskDesc))
 		foreach($this->taskDesc['languages'] as $language) {
 			Utils::debugLog( "Language: $language" , 1 );
 			$language = strtolower($language);
