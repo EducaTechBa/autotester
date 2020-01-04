@@ -317,8 +317,8 @@ class Test {
 		}
 
 		if ($found_fails || !$found_expecteds) {
-			$this->result['status'] = $tool->result['success'] = TEST_WRONG_OUTPUT;
-			$this->result['success'] = $tool->result['status'] = false;
+			$this->result['status'] = $tool->result['status'] = TEST_WRONG_OUTPUT;
+			$this->result['success'] = $tool->result['success'] = false;
 			Utils::debugLog( "Test failed - wrong output", 1 );
 		} else {
 			Utils::debugLog( "Output ok...", 1 );
