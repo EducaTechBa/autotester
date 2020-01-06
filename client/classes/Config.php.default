@@ -144,7 +144,7 @@ $conf_tools = array(
 			"language" => "QBasic",
 			"path" => "/home/vedran/Programs/qb64/qb64",
 			"cmd" => "{path} -x -o {output_file} {source_files}",
-			"version_line" => "{path} -x /tmp/nonexistant.bas | grep QB64", // hack
+			"version_line" => "{path} -help | grep QB64",
 			"features" => array( ),
 		),
 	),
@@ -183,7 +183,6 @@ $conf_tools = array(
 		array(
 			"language" => "QBasic",
 			"cmd" => "{executable}",
-			// Use popen call for compiled binaries
 			"environment" => array(
 				"type" => "exec"
 			),
