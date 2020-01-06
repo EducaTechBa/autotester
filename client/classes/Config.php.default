@@ -186,6 +186,7 @@ $conf_tools = array(
 			"environment" => array(
 				"type" => "exec"
 			),
+			"ignore_characters" => array( "?" ),
 		),
 		
 		// Default - execute compiled binary
