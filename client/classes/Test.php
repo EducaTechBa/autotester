@@ -34,7 +34,7 @@ class Test {
 		$this->task =& $task;
 
 		// Create directory if neccessary
-		if (array_key_exists('options', $spec) && in_array("reuse", $spec['options']) && isset($task->lastTest)) {
+		if (array_key_exists('options', $spec) && in_array("reuse", $spec['options'])) {
 			$this->testPath = $task->lastTest->path();
 			$this->executable = $task->lastTest->executable;
 			// Remove coredump
@@ -227,7 +227,6 @@ class Test {
 					if (array_key_exists("expect_exception", $tool->properties)) {
 						$exp_exc = $tool->properties['expect_exception'];
 						$recv_exc = substr($output, $except + strlen($markers[2]));
-						print "Recv $recv_exc\n";
 						if (!$exp_exc || $exp_exc == $recv_exc) {
 							Utils::debugLog( "Exception '$exp_exc' ok...", 1 );
 						} else {

@@ -26,8 +26,8 @@ require_once("tools/ExternalTool.php");
 
 class Task {
 	public $language = "", $zipFile = "", $taskDesc = array(), $tools = array(), $errMsg = "";
-	private $result, $lastTest = null;
-	public $afterEachTest = "";
+	private $result;
+	public $afterEachTest = "", $lastTest = null;
 	
 	public function __construct($taskDesc, $program = []) {
 		global $conf_verbosity;
