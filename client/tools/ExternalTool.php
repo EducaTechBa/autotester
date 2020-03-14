@@ -51,6 +51,7 @@ class ExternalTool extends AbstractTool {
 		// Replace properties into command line
 		foreach($this->properties as $key => $value) {
 			if (!is_string($value)) continue;
+			if ($key != "path" && $key != "options") $value = escapeshellarg($value);
 			$key = "{".$key."}";
 			$cmd = str_replace($key, $value, $cmd);
 		}
