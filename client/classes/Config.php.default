@@ -229,7 +229,7 @@ $conf_tools = array(
 		array(
 			"name" => "wget",
 			"path" => "wget",
-			"cmd" => "{path} {options} {url}",
+			"cmd" => "{path} {options} {url} -O {filename}",
 			"options" => "", // add options that need to be passed every time
 		),
 	),
