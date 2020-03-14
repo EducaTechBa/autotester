@@ -54,6 +54,10 @@ class Task {
 		if (!empty($program))
 			if (!$this->setProgram($program))
 				throw new Exception($this->errMsg);
+		
+		// No tests specified?
+		if (!array_key_exists('tests', $this->taskDesc))
+			throw new Exception("Task specifies no tests");
 	}
 
 	public function setProgram($programData) {
