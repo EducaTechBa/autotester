@@ -31,6 +31,7 @@ $conf_tmp_path = "/tmp";
 $conf_basepath = "/tmp/buildservice";
 $conf_unzip_command = "unzip";
 
+$conf_protocol_version = "2020.01";
 
 
 

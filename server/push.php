@@ -446,6 +446,7 @@ function ws_parse_arguments() {
 		$queue = new Queue;
 		return array( "success" => true, "data" => $queue->getStats() );
 	}
+	return array( "success" => true, "message" => "Autotester server v$conf_protocol_version is running. No action specified.", "data" => [] );
 }
 
 
