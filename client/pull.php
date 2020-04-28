@@ -300,6 +300,10 @@ function authenticate()
 	if ($conf_json_login_required) {
 		if ($conf_verbosity>0) print "Authenticating...\n";
 		$session_id = json_login();
+		if ($session_id === false) {
+			print "Invalid username/password for webservice\n";
+			exit(5);
+		}
 		if ($conf_verbosity>0) print "Login successful!\n\n";
 	}
 }

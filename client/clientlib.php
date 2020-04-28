@@ -147,10 +147,7 @@ function json_login()
 
 	$data = array("login" => $conf_json_user, "pass" => $conf_json_pass);
 	$result = json_request_retry ($url, $data, "POST");
-	if ($result['success'] !== "true") {
-		print "Invalid username/password for webservice: ".$result['code']."\n";
-		exit(5);
-	}
+	if ($result['success'] !== "true") return false;
 	
 	return $result['sid'];
 }
