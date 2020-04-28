@@ -1,20 +1,22 @@
 {
-    "id": 5443,
-    "name": "Sample QBasic, C and C++ task",
-    "languages": [ "QBasic", "C", "C++", "Python" ],
+    "id": 5444,
+    "name": "Sample Python3 task",
+    "languages": [ "Python" ],
     "tools" : {
-        "compile" : {}, 
+        "compile" : {
+            "version": "3+"
+        }, 
         "execute" : {
             "environment" : {
                 "timeout" : 10,
                 "memory" : 1000000
-            }
+            },
+            "version": "3+"
         }
     },
     "tests": [
         {
             "id": 1,
-            "patch" : [{}],
             "compile" : {},
             "execute" : {
                 "environment" : {

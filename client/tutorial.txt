@@ -135,6 +135,12 @@ All tools have certain common parameters that can be provided in task specificat
       },
 
     If buildhost has a g++ compiler it will be used. Otherwise, any eligible C++ compiler will be used. If buildhost has no C++ compiler, the task will be rejected.
+
+  * version : string
+  
+    Specifies tool version to use (if available). Version strings obey the standard format X.Y.Z where X is major version, Y is minor version and Z is point release. All three are assumed to be integers. If minor version or point release are ommitted, it is assumed that any is allowed. In addition, the version string can have suffix "+" meaning that this version or greater is required, while without this suffix only this exact version is allowed.
+    
+    Examples: if version string is "3", this means that versions "3.0", "3.1.1" and "3.2.4" are allowed, while "4.0.1" is not. If version string is "3.1+", version "3.0" is not allowed, while "3.1.1", "3.2.4" and "4.0.1" are allowed.
     
   * features : array of strings
     

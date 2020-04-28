@@ -123,12 +123,20 @@ class Task {
 						$merged_tool = Utils::findPlugin($toolname, $language, $name, $available_tool);
 						
 						// There is no matching plugin, just instantiate ExternalTool with given properties
-						// Config file shoul include sufficient data
+						// Config file should include sufficient data
 						if (!$merged_tool)
 							$merged_tool = new ExternalTool($available_tool);
 
 						// Attempt to merge tool to find if it has all required features
 						if (!$merged_tool->merge($tool_options)) continue;
+						
+						// Is there a version requirement?
+						if (array_key_exists("version", $tool_options)) {
+							if (!$merged_tool->testVersion($tool_options['version'])) {
+								Utils::debugLog( "Wrong version " . $merged_tool->getVersion() . ", required " . $tool_options['version'], 1 );
+								continue;
+							}
+						}
 						
 						// Special processing for "prefer" keyword
 						if (array_key_exists("prefer", $tool_options) && $tool_options['prefer'] !== $available_tool['name']) {

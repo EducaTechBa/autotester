@@ -88,9 +88,9 @@ $conf_tools = array(
 		array(
 			"name" => "gcc",
 			"language" => "C",
-			"path" => "/usr/bin/gcc",
+			"path" => "gcc",
 			"cmd" => "{path} -o {output_file} {source_files} {options}",
-			"version_line" => "{path} --version | grep ^gcc",
+			"version_line" => "{path} --version | grep ^gcc | sed -e 's/gcc\s(.*)\s//'",
 			"options" => "-lm -pass-exit-codes", // CLI switches that will always be passed regardless
 			"features" => array( // add features supported by this compiler
 				"optimize" => "-O1",
@@ -104,9 +104,9 @@ $conf_tools = array(
 		array(
 			"name" => "g++",
 			"language" => "C++",
-			"path" => "/usr/bin/g++",
+			"path" => "g++",
 			"cmd" => "{path} -o {output_file} {source_files} {options}",
-			"version_line" => "{path} --version | grep ^g++",
+			"version_line" => "{path} --version | grep ^g++ | sed -e 's/g++\s(.*)\s//'",
 			"options" => "-lm -pass-exit-codes", // CLI switches that will always be passed regardless
 			"features" => array(
 				"c++11" => "-std=c++11",
@@ -124,7 +124,7 @@ $conf_tools = array(
 			"path" => "javac",
 			"executor_path" => "java",
 			"cmd" => "{path} -d {test_path} {options} {source_files}",
-			"version_line" => "{path} --version",
+			"version_line" => "{path} --version  | cut -d ' ' -f 2",
 			"features" => array(),
 		),
 
@@ -134,8 +134,14 @@ $conf_tools = array(
 			"language" => "Python",
 			"path" => "/usr/bin/python3",
 			"cmd" => "{path} -m py_compile {options} {source_files}",
-			"version_line" => "{path} --version",
-			"features" => array( "python3" ), // Python version 3 is used
+			"version_line" => "{path} --version 2>&1 | cut -d ' ' -f 2",
+		),
+		array(
+			"name" => "python",
+			"language" => "Python",
+			"path" => "/usr/bin/python",
+			"cmd" => "{path} -m py_compile {options} {source_files}",
+			"version_line" => "{path} --version 2>&1 | cut -d ' ' -f 2",
 		),
 
 		// QB64
@@ -144,7 +150,7 @@ $conf_tools = array(
 			"language" => "QBasic",
 			"path" => "/home/vedran/Programs/qb64/qb64",
 			"cmd" => "{path} -x -o {output_file} {source_files}",
-			"version_line" => "{path} -help | grep QB64",
+			"version_line" => "{path} -help | grep QB64 | cut -d ' ' -f 2",
 			"features" => array( ),
 		),
 	),
@@ -155,7 +161,7 @@ $conf_tools = array(
 			"language" => "Java",
 			"path" => "java",
 			"cmd" => "{path} {executable}",
-			"version_line" => "{path} --version",
+			"version_line" => "{path} --version | cut -d ' ' -f 2",
 			"features" => array(),
 		),
 
@@ -165,8 +171,15 @@ $conf_tools = array(
 			"language" => "Python",
 			"path" => "/usr/bin/python3",
 			"cmd" => "{path} {options} {executable}",
-			"version_line" => "{path} --version",
+			"version_line" => "{path} --version 2>&1 | cut -d ' ' -f 2",
 			"features" => array( "python3" ), // Python version 3 is used
+		),
+		array(
+			"name" => "python",
+			"language" => "Python",
+			"path" => "/usr/bin/python",
+			"cmd" => "{path} {options} {executable}",
+			"version_line" => "{path} --version 2>&1 | cut -d ' ' -f 2",
 		),
 
 		// Octave
@@ -175,7 +188,7 @@ $conf_tools = array(
 			"language" => "Matlab",
 			"path" => "/usr/bin/octave",
 			"cmd" => "{path} -W {options} {executable}",
-			"version_line" => "{path} --version | grep version",
+			"version_line" => "{path} --version | grep version | cut -d ' ' -f 2 ",
 			"features" => array(),
 		),
 		
@@ -206,7 +219,7 @@ $conf_tools = array(
 			"features" => array(),
 			// options needed to process core dump (COREFILE will be replaced with filename)
 			"cmd" => "{path} --batch -ex \"bt 100\" --core={coredump} {executable}",
-			"version_line" => "{path} --version | grep ^GNU",
+			"version_line" => "{path} --version | grep ^GNU  | sed -e 's/GNU gdb\s(.*)\s//'",
 		),
 	),
 	"profile" => array(
@@ -222,7 +235,7 @@ $conf_tools = array(
 				"log" => "--log-file=LOGFILE", 
 				//"log" => "--log-file-exact=LOGFILE",  // old valgrind
 			),
-			"version_line" => "{path} --version",
+			"version_line" => "{path} --version | cut -d ' ' -f 2 ",
 		),
 	),
 	"http" => array(
@@ -231,6 +244,7 @@ $conf_tools = array(
 			"path" => "wget",
 			"cmd" => "{path} {options} {url} -O {filename}",
 			"options" => "", // add options that need to be passed every time
+			"version_line" => "wget -V | grep ^GNU | cut -d ' ' -f 3"
 		),
 	),
 );
