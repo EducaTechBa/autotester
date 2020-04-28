@@ -41,6 +41,14 @@ class ExternalTool extends AbstractTool {
 	);
 	
 	
+	// Test if tool exists on the system (path should be specified for ExternalTool)
+	public function exists() {
+		$exitCode = 0;
+		if (array_key_exists('path', $this->properties))
+			exec("command -v " . $this->properties['path'], $output, $exitCode);
+		return $exitCode == 0;
+	}
+	
 	// Tool::run function executes tool
 	public function run() {
 		$cmd = $this->properties['cmd'];

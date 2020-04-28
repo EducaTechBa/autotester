@@ -30,6 +30,11 @@ abstract class AbstractTool {
 		if (array_key_exists('name', $properties)) $this->name = $properties['name']; 
 		if (array_key_exists('features', $properties)) $this->features = $properties['features'];
 	}
+	
+	public function exists() {
+		// Test if tool exists on the system
+		return true;
+	}
 
 	abstract public function run();
 

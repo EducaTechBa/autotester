@@ -44,7 +44,7 @@ class Task {
 			$language = strtolower($language);
 			$this->tools[$language] = $this->findTools($language);
 			if ($this->tools[$language]) $found = true;
-			else Utils::debugLog( "Language not found" , 1 );
+			else Utils::debugLog( "Some tools were not found for $language" , 1 );
 		}
 		
 		// Host can't build any of the languages and tools listed
@@ -157,12 +157,9 @@ class Task {
 			}
 			
 			// Test for invalid config, sadly
-			if (array_key_exists('path', $tools[$tool]->properties)) {
-				exec("command -v " . $tools[$tool]->properties['path'], $output, $exitCode);
-				if ($exitCode != 0) {
-					$this->errMsg = "Tool '$toolname' specified in config but program not found. Please check your Config.php";
-					return false;
-				}
+			if (!$tools[$tool]->exists()) {
+				$this->errMsg = "Tool '$toolname' specified in config but not found. Please check your Config.php";
+				return false;
 			}
 			
 			if ($tools[$tool]->getVersion())
