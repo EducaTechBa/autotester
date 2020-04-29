@@ -1,7 +1,7 @@
 {
     "id": 5443,
     "name": "Sample QBasic, C and C++ task",
-    "languages": [ "QBasic", "C", "C++", "Python" ],
+    "languages": [ "QBasic", "C", "C++", "Python", "Java" ],
     "tools" : {
         "compile" : {}, 
         "execute" : {
