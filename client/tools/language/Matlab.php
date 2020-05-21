@@ -33,7 +33,8 @@ class Matlab extends Language {
 			copy($primaryFile, $backupFile);
 		
 		$main_source_code = file_get_contents($primaryFile);
-		if (!Utils::endsWith(trim($main_source_code), "end"))
+		$src = trim(preg_replace("/\%.*?$/", "", $main_source_code));
+		if (!Utils::endsWith($src, "end"))
 			$main_source_code .= "\nend\n";
 	
 		file_put_contents($primaryFile, "disp(\"\")\n\n".$main_source_code."\n".$options['code']);
