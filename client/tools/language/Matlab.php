@@ -32,10 +32,24 @@ class Matlab extends Language {
 		if (!file_exists($backupFile)) 
 			copy($primaryFile, $backupFile);
 		
+		// Use Octave to test for "end"
 		$main_source_code = file_get_contents($primaryFile);
-		$src = trim(preg_replace("/\%.*?$/", "", $main_source_code));
-		if (!Utils::endsWith($src, "end"))
-			$main_source_code .= "\nend\n";
+		global $conf_tools;
+		$found_octave = false;
+		foreach($conf_tools['execute'] as $tool)
+			if (array_key_exists("name", $tool) && $tool['name'] == "octave")
+				$found_octave = $tool;
+		if ($found_octave) {
+			$testFile = $primaryFile . ".test.m";
+			file_put_contents($testFile, "disp(\"\")\n\n".$main_source_code."\ndisp(\"Hello, autotester!\")");
+			$output = shell_exec($found_octave['path']." ".$testFile." 2>&1");
+			if (!strstr($output, "Hello, autotester!") && !strstr($output, "error:"))
+				$main_source_code .= "\nend\n";
+		} else {
+			$src = trim(preg_replace("/\%.*?$/", "", $main_source_code));
+			if (!Utils::endsWith($src, "end"))
+				$main_source_code .= "\nend\n";
+		}
 	
 		file_put_contents($primaryFile, "disp(\"\")\n\n".$main_source_code."\n".$options['code']);
 

@@ -63,7 +63,6 @@ class Task {
 
 	public function setProgram($programData) {
 		$language = strtolower($programData['language']);
-		Utils::debugLog( "\nProgram " . $programData['name'] . " passed as parameter", 1 );
 		Utils::debugLog( "Language: $language", 1 );
 		if (!array_key_exists($language, $this->tools) || $this->tools[$language] === false)
 			return false;
