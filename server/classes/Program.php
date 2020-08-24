@@ -33,7 +33,7 @@ class Program {
 			do {
 				$progDesc['id'] = rand(1, 100000);
 				$progpath = $programspath . "/" . $progDesc['id'];
-			} while(file_exists($taskpath));
+			} while(file_exists($progpath));
 		} else
 			$progpath = $programspath . "/" . $progDesc['id'];
 		
