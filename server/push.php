@@ -288,7 +288,7 @@ function ws_parse_arguments() {
 			}
 		}
 		$queue = new Queue;
-		$queue->add( $program->desc['task'], $program->id );
+		$queue->add( $program->desc['task'], $program->id, false );
 		
 		return array( "success" => true );
 	}
