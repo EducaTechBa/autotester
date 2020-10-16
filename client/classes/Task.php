@@ -44,6 +44,7 @@ class Task {
 			$language = strtolower($language);
 			$this->tools[$language] = $this->findTools($language);
 			if ($this->tools[$language]) $found = true;
+			else Utils::debugLog( "Some tools were not found for $language" , 1 );
 		}
 		
 		// Host can't build any of the languages and tools listed
@@ -54,10 +55,15 @@ class Task {
 		if (!empty($program))
 			if (!$this->setProgram($program))
 				throw new Exception($this->errMsg);
+		
+		// No tests specified?
+		if (!array_key_exists('tests', $this->taskDesc))
+			throw new Exception("Task specifies no tests");
 	}
 
 	public function setProgram($programData) {
 		$language = strtolower($programData['language']);
+		Utils::debugLog( "Language: $language", 1 );
 		if (!array_key_exists($language, $this->tools) || $this->tools[$language] === false)
 			return false;
 		$this->language = $language;
@@ -116,12 +122,20 @@ class Task {
 						$merged_tool = Utils::findPlugin($toolname, $language, $name, $available_tool);
 						
 						// There is no matching plugin, just instantiate ExternalTool with given properties
-						// Config file shoul include sufficient data
+						// Config file should include sufficient data
 						if (!$merged_tool)
 							$merged_tool = new ExternalTool($available_tool);
 
 						// Attempt to merge tool to find if it has all required features
 						if (!$merged_tool->merge($tool_options)) continue;
+						
+						// Is there a version requirement?
+						if (array_key_exists("version", $tool_options)) {
+							if (!$merged_tool->testVersion($tool_options['version'])) {
+								Utils::debugLog( "Wrong version " . $merged_tool->getVersion() . ", required " . $tool_options['version'], 1 );
+								continue;
+							}
+						}
 						
 						// Special processing for "prefer" keyword
 						if (array_key_exists("prefer", $tool_options) && $tool_options['prefer'] !== $available_tool['name']) {
@@ -148,6 +162,13 @@ class Task {
 				$this->errMsg = "No suitable tool of type '$toolname' found";
 				return false;
 			}
+			
+			// Test for invalid config, sadly
+			if (!$tools[$tool]->exists()) {
+				$this->errMsg = "Tool '$toolname' specified in config but not found. Please check your Config.php";
+				return false;
+			}
+			
 			if ($tools[$tool]->getVersion())
 				Utils::debugLog( "Found $tool: " . $tools[$tool]->getVersion(), 1 );
 			// Let the tool know what kind of tool it is :D

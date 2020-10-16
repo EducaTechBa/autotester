@@ -38,7 +38,7 @@ pcntl_signal(SIGHUP, 'signalHandler');
 
 
 // Command line params 
-echo "AUTOTESTER pull.php\nCopyright (c) 2014-2019 Vedran Ljubović\nElektrotehnički fakultet Sarajevo\nLicensed under GNU GPL v3\n\n";
+echo "AUTOTESTER pull.php\nCopyright (c) 2014-2020 Vedran Ljubović\nElektrotehnički fakultet Sarajevo\nLicensed under GNU GPL v3\n\n";
 
 $taskid = $progid = $wait_secs = 0;
 $hibernate = false;

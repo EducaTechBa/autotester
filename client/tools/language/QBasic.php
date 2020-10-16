@@ -49,15 +49,9 @@ class QBasic extends Language {
 
 		// By default we patch QBasic programs so that output is redirected to console
 		$main_source_code = "\$CONSOLE:ONLY\n_DEST _CONSOLE\n$main_source_code\nSYSTEM\n";
-		if (strpos($main_source_code, "END\n"))
-			$main_source_code = str_replace("END\n", "SYSTEM\n", $main_source_code);
-		else if (strpos($main_source_code, "END\r"))
-			$main_source_code = str_replace("END\r", "SYSTEM\r", $main_source_code);
-		else if (strpos($main_source_code, "\nEND"))
-			$main_source_code = str_replace("\nEND", "\nSYSTEM", $main_source_code);
-		else if (strpos($main_source_code, "\rEND"))
-			$main_source_code = str_replace("\rEND", "\rSYSTEM", $main_source_code);
-		
+		// If code is calling END, replace it with SYSTEM
+		// Otherwise it will display "Press any key to continue"
+		$main_source_code = preg_replace("/(\s)END([\n\r])/", '$1SYSTEM$2', $main_source_code);		
 	
 		file_put_contents($primaryFile, $main_source_code);
 

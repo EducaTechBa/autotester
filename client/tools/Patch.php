@@ -26,6 +26,10 @@ class Patch extends AbstractTool {
 	private $lineNumbersMap;
 
 	public function __construct($properties) {
+		// Is tool specification an array?
+		if (array_key_exists('position', $properties))
+			$properties = array($properties);
+			
 		// Set defaults
 		foreach ($properties as &$options) {
 			if (!array_key_exists("position", $options))

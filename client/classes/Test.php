@@ -194,6 +194,10 @@ class Test {
 	// Since tool->result['status'] can be changed, we pass by reference
 	protected function checkOutput(&$tool) {
 		$output = $tool->result['output'];
+		if (array_key_exists("ignore_characters", $tool->properties))
+		foreach($tool->properties['ignore_characters'] as $chr)
+			$output = str_replace($chr, "", $output);
+		
 		$expecteds = $fails = array();
 		if (array_key_exists("expect", $tool->properties))
 			$expecteds = $tool->properties['expect'];
