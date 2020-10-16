@@ -192,6 +192,13 @@ function ws_parse_arguments() {
 			return array( "success" => false, "code" => "ERR004", "message" => "Unknown task" );
 		}
 		
+		if (!array_key_exists("language", $progDesc)) {
+			if (array_key_exists("language", $task->desc))
+				$progDesc['language'] = $task->desc['language'];
+			if (array_key_exists("languages", $task->desc) && is_array($task->desc['languages']))
+				$progDesc['language'] = $task->desc['languages'][0];
+		}
+		
 		// No failure modes
 		$program = Program::create( $progDesc );
 		$task->addProgram( $program->id );
