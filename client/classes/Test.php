@@ -361,8 +361,11 @@ class Test {
 
 	public function purge()
 	{
-		Utils::rmMinusR($this->testPath);
-		rmdir($this->testPath);
+		global $conf_purge;
+		if ($conf_purge) {
+			Utils::rmMinusR($this->testPath);
+			rmdir($this->testPath);
+		}
 	}
 	
 	// Helper function to remove test base path from string

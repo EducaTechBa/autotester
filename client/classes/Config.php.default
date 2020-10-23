@@ -75,6 +75,8 @@ $conf_default_environment = array(
 );
 */
 
+$conf_purge = true; // Set to false for debugging
+
 
 // ----------------------------------------------
 // TOOLS

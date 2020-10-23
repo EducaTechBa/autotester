@@ -96,6 +96,8 @@ $configuration_output = <<<CONFIG
 \$conf_json_max_retries = $conf_json_max_retries;
 \$conf_default_wait = $conf_default_wait;
 
+\$conf_purge = true;
+
 \$conf_tools = array(
 CONFIG;
 
