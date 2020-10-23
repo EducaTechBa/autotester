@@ -105,7 +105,7 @@ class Language {
 			$markers = $this->tool->getMarkers();
 			
 			if ($use_markers)
-				$test_code = $this->printStdout($markers[0]) . "\n" . $test_code . $this->printStdout($markers[1]) . "\n";
+				$test_code = $this->printStdout($markers[0]) . "\n" . $test_code . "\n" . $this->printStdout($markers[1]) . "\n";
 			
 			if ($try_catch)
 				$test_code = $this->tryCatch($test_code, $markers[2]);
