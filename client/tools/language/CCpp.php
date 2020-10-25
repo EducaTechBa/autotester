@@ -75,7 +75,7 @@ class CCpp extends Language {
 			
 			if (array_key_exists("replace_substrings", $options)) {
 				foreach($options['replace_substrings'] as $search => $replace)
-					str_replace($search, $replace, $content);
+					$content = str_replace($search, $replace, $content);
 				file_put_contents($file, $content);
 				
 				// The file has changed, so we need to parse again
