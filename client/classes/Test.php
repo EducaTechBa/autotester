@@ -64,7 +64,7 @@ class Test {
 
 			// Find tool in task tools
 			if (array_key_exists($key, $this->task->tools[$task->language])) {
-				$tool = $this->task->tools[$task->language][$key];
+				$tool = clone $this->task->tools[$task->language][$key];
 				if (!$tool->merge($value)) {
 					// Merge failed usually means that required features weren't properly declared in task header 
 					$this->result['success'] = false;
