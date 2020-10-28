@@ -55,7 +55,7 @@ if ($clientId === false) {
 	Utils::debugLog( "Failed to connect to server." , 0 );
 	return 0;
 }
-$clientData = array( "client" => $clientId ); // Shortcut
+$clientData = array( "client" => $clientId, "mode" => "awake" ); // Shortcut
 Utils::debugLog( "OS: " . $data['os'] , 1 );
 
 
@@ -67,13 +67,15 @@ else {
 	do {
 		$mode = json_query("ping", $clientData);
 		Utils::debugLog( "ping - $mode" , 2 );
-		if (!$hibernate && $mode == "hibernate") {
+		if (!$hibernate && ($mode == "hibernate" || $mode === false)) {
 			Utils::debugLog("Hibernate...", 1);
 			$hibernate = true;
+			$clientData['mode'] = "hibernate";
 		}
 		if ($hibernate && $mode == "awake") {
 			Utils::debugLog("Awake...", 1);
 			$hibernate = false;
+			$clientData['mode'] = "awake";
 		}
 			
 		if ($mode == "go" && !$hibernate) {
@@ -178,7 +180,7 @@ function process_program($task, $program_id) {
 
 	} else {
 		$stop_testing = false;
-		$task->afterEachTest = "\$ans = json_query(\"setResult\", array(\"id\" => $program_id, \"client\" => $clientId, \"result\" => json_encode(\$result)), \"POST\" ); if (\$ans === \"please_stop\") \$stop_testing = true;";
+		$task->afterEachTest = "\$ans = json_query(\"setResult\", array(\"id\" => $program_id, \"client\" => $clientId, \"result\" => json_encode(\$result)), \"POST\" ); if (\$ans === false || \$ans === \"please_stop\") \$stop_testing = true;";
 		$result = $task->run();
  	}
 

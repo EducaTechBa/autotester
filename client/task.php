@@ -77,7 +77,7 @@ if (php_sapi_name() == "cli") {
 	try {
 		$task = new Task($taskDesc, $program);
 		if ($result = $task->run()) {
-			$result_json = json_encode( $result, JSON_PRETTY_PRINT );
+			$result_json = json_encode( $result );
 			if ($argc >= 4)
 				file_put_contents( $argv[3], $result_json );
 			else
