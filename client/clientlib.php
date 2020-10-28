@@ -108,7 +108,7 @@ function json_request_retry($url, $parameters, $method = "GET")
 	} while ($result === FALSE && $try < $conf_json_max_retries);
 	if ($result === FALSE) {
 		print "Giving up after $try attempts... try again later!\n";
-		exit(1);
+		return false;
 	}
 	return $result;
 }
@@ -125,9 +125,10 @@ function json_query($action, $parameters = array(), $method = "GET")
 		$parameters[session_name()] = $session_id;
 	$result = json_request_retry($url, $parameters, $method);
 
-	if (!array_key_exists("success", $result)) {
+	if (!is_array($result) || !array_key_exists("success", $result)) {
 		print "JSON query $action failed: unknown reason\n";
 		if ($conf_verbosity>0) print_r($result);
+		return false;
 	} 
 	else if ($result["success"] !== "true" && $result["success"] !== true) {
 		print "JSON query $action failed: ". $result['code']. " : ". $result['message'] . "\n"; 

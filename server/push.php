@@ -346,7 +346,10 @@ function ws_parse_arguments() {
 			return array( "success" => false, "code" => "ERR007", "message" => "Unknown client - please register first" );
 		}
 		
-		return array( "success" => true, "data" => $client->ping() );
+		$mode = "";
+		if (isset($_REQUEST['mode'])) $mode = $_REQUEST['mode'];
+		
+		return array( "success" => true, "data" => $client->ping($mode), "mode" => $mode );
 	}
 	
 	if ($action == "nextTask") {

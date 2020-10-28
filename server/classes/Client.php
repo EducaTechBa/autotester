@@ -104,14 +104,18 @@ class Client {
 	
 	// Perform ping operation for client: call updateLastTime and return
 	// next operation mode for client
-	public function ping() {
+	public function ping($mode = "") {
 		$this->updateLastTime();
 	
 		$clientRequestedMode = $this->getRequestedMode(); // hibernate, awake...
-		if ($clientRequestedMode) {
-			// unlink( $this->path . "/requested_mode" ); // ??
+		if ($clientRequestedMode == "awake")
+			// Client is now awoken
+			unlink($this->path . "/requested_mode");
+		if ($clientRequestedMode)
 			return $clientRequestedMode;
-		}
+		
+		// Client thinks he's hibernating
+		if ($mode == "hibernate") return "awake";
 		
 		$queue = new Queue;
 		if (empty($queue->queue))
