@@ -198,7 +198,7 @@ All tools have certain common parameters that can be provided in task specificat
       "full" : The whole of standard output is compared exactly against the value "expect"/"fail".
       "invisible" (default) : Normally invisible characters are removed both from program output and from "expect"/"fail" strings before comparison. This includes whitespace at the end of lines, as well as empty lines at the beginning and end of string. Also, difference between DOS/Windows newline characters and UNIX newline characters is ignored.
       "whitespace" : All whitespace characters are stripped both from output and the "expect"/"fail" strings before comparison.
-      "substring" : The string given in "expect"/"fail" is searched in output as a substring.
+      "substring" : The string given in "expect"/"fail" is searched in output as a substring, removing invisible characters.
       "regex" : The "expect"/"fail" field is parsed as a Perl-compatible regular expression.
       
     Note that if you wish to detect exceptions, you can wrap your test code in a try-catch block.
