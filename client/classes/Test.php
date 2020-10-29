@@ -283,6 +283,8 @@ class Test {
 				if (preg_match("/$expect/", $output))
 					$found_expecteds = true;
 			} else if ($matching == "substring") {
+                                $output = trim(preg_replace("/\s+/", " ", $output));
+                                $expect = trim(preg_replace("/\s+/", " ", $expect));
 				if (strstr($output, $expect))
 					$found_expecteds = true;
 			} else if ($matching == "whitespace") {
