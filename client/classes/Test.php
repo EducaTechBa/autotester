@@ -34,7 +34,7 @@ class Test {
 		$this->task =& $task;
 
 		// Create directory if neccessary
-		if (array_key_exists('options', $spec) && in_array("reuse", $spec['options'])) {
+		if (array_key_exists('options', $spec) && in_array("reuse", $spec['options']) && is_object($task->lastTest)) {
 			$this->testPath = $task->lastTest->path();
 			$this->executable = $task->lastTest->executable;
 			// Remove coredump
