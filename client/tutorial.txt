@@ -213,9 +213,9 @@ All tools have certain common parameters that can be provided in task specificat
     
     If string is empty, any kind of exception is accepted, otherwise string represents exception class that is expected (works only in Java). If you want to detect the kind of exception in C++, or see exception message etc. use patch tool to write your own try-catch block. Also, this only works after using patch tool with try_catch option. If you specify both expect and expect_exception, test will succeed only if program first provides expected output, then throws expected exception.
     
-  * merge_stderr : boolean
+  * output_stream : enum
     
-    If true, standard error output will be merged to standard output for "expect"/"fail" matching. Default is true. Note that tools such as compilers, profilers etc. mostly send their output to stderr.
+    Which of the output streams to use for "expect" / "fail" matching. Possible options (currently) are: "stdout", "stderr" and "both". Default is "both".
 
 
 In addition, certain tool kinds have special parameters. Below is the list of default tool kinds configured in buildservice, along with any special parameters:
