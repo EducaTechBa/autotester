@@ -157,7 +157,7 @@ class CCpp extends Language {
 					if ($conf_verbosity>1) $this->parser_error("C-style comment doesn't end", "", $string, $i);
 					break;
 				}
-				$i = $eoc+2;
+				$i = $eoc+1;
 			}
 			if ($string[$i] == "'") {
 				$start = $i;
