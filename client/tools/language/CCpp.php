@@ -314,7 +314,11 @@ class CCpp extends Language {
 				if ($conf_verbosity>2) print "Define $define_name\n";
 				$symbols[] = array( 'name' => $define_name, 'pos' => $define_begin );
 				
-				$i = $this->skip_to_newline($sourcecode, $i);
+				while (1) {
+					$i = $this->skip_to_newline($sourcecode, $i);
+					if ($sourcecode[$i-1] == "\\") $i+=2;
+					else break;
+				}
 				continue;
 			}
 			
