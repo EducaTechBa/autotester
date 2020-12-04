@@ -8,7 +8,7 @@ if (isset($_REQUEST['language'])) {
 
 function tr($txt) { 
 	global $language;
-	if (array_key_exists($txt, $language)) return $language[$txt];
+	if (is_array($language) && array_key_exists($txt, $language)) return $language[$txt];
 	return $txt; 
 }
 
@@ -27,8 +27,6 @@ function tr($txt) {
 <body bgcolor="#ffffff">
 <?php
 
-if (isset($_REQUEST['title']))
-	print "<h2>" . $_REQUEST['title'] . "</h2>\n";
 
 // List of test status code labels
 $statuses = array(
@@ -52,7 +50,7 @@ $statuses = array(
 	array( "id" => "mismatched_free", "code" => 705, "label" => tr("Wrong deallocator"), "description" => tr("Wrong type of deallocation used (delete vs. delete[] ...)") ),
 );
 
-$newlines = array( "\r\n", "\n", "\\n" );
+$newlines = array( "\r\n", "\\n", "\n" );
 
 
 
@@ -98,7 +96,7 @@ function show_table($task, $result) {
 	
 	$no = 0;
 	foreach($task['tests'] as $test) {
-		if (array_key_exists('options', $test) && in_array("silent", $test['options'])) continue;
+		if (array_key_exists('options', $test) && in_array($test['options'], "silent")) continue;
 		if (!array_key_exists($test['id'], $result['test_results'])) continue;
 		$tr = $result['test_results'][$test['id']];
 		if ($tr['status'] == 1) 
@@ -115,14 +113,14 @@ function show_table($task, $result) {
 
 		// Get status text
 		$status_text = "Ok";
-		if (array_key_exists('options', $test) && in_array("nodetail", $test['options']) && $tr['status'] != 1) 
+		if (array_key_exists('options', $test) && in_array($test['options'], "nodetail") && $tr['status'] != 1) 
 			$status_text = "Not ok";
 		else foreach($statuses as $st)
 			if ($tr['status'] == $st['code'])
 				$status_text = $st['label'];
 		
 		// Gray color for hidden tests
-		if (array_key_exists('options', $test) && in_array("nodetail", $test['options']))
+		if (array_key_exists('options', $test) && in_array($test['options'], "nodetail"))
 			$class = "gray";
 		else
 			$class = "";
@@ -173,6 +171,7 @@ function escape_javascript($s) {
 	$s = str_replace($newlines, "\\n", trim($s));
 	$s = str_replace("'", "\'", $s);
 	$s = preg_replace("/\s+\\\\n/", "\\n", $s);
+	$s = preg_replace("/\\\\([^n])/", "\\\\\\\\\\\\$1", $s);
 	return $s;
 }
 
@@ -262,7 +261,7 @@ function show_test($task, $result, $test) {
 	$test_no = 0;
 	foreach ($task['tests'] as $t) {
 		if (array_key_exists('options', $t) && in_array("silent", $t['options'])) continue;
-		if (!array_key_exists($t['id'], $result['test_results'])) continue;
+		if (!array_key_exists('id', $t) || !array_key_exists($t['id'], $result['test_results'])) continue;
 		$test_no++;
 		if ($t['id'] == $test) { $the_test = $t; break; }
 	}
@@ -283,9 +282,6 @@ function show_test($task, $result, $test) {
 	// Status background
 	if ($test_result['status'] == 1) $style = "success"; else $style = "fail";
 
-	if (!array_key_exists('compiler_options', $result)) $result['compiler_options'] = "";
-	if (!array_key_exists('debug', $result['tools'])) $result['tools']['debug'] = "";
-	if (!array_key_exists('profile[memcheck]', $result['tools'])) $result['tools']['profile[memcheck]'] = "";
 
 ?>
 	<script>
@@ -300,9 +296,12 @@ function show_test($task, $result, $test) {
 		<b><?=tr("Testing system:")?></b><br><?=$result['buildhost_description']['id']?><br><br>
 		<b>OS:</b><br><?=str_replace("\n", "<br>", $result['buildhost_description']['os'])?><br><br>
 		<b><?=tr("Compiler version:")?></b><br><?=$result['tools']['compile']?><br><br>
-		<!-- <b><?=tr("Compiler options:")?></b><br><?=$result['compiler_options']?><br><br> -->
 		<b><?=tr("Debugger version:")?></b><br><?=$result['tools']['debug']?><br><br>
-		<b><?=tr("Profiler version:")?></b><br><?=$result['tools']['profile[memcheck]']?>
+		<?php 
+		if (array_key_exists("profile[memcheck]", $result['tools'])) {
+			print "<b>" . tr("Profiler version:") . "</b><br>" . $result['tools']["profile[memcheck]"];
+		} 
+		?>
 	</div>
 	
 	<h3><?=tr("Result")?>: <span class="<?=$style?>"><?=$status_text?></span></h3>
@@ -311,7 +310,6 @@ function show_test($task, $result, $test) {
 	// Patch tool
 	if (array_key_exists('patch', $the_test))
 	foreach($the_test['patch'] as $patch) {
-		if (!array_key_exists('position', $patch)) continue;
 		if ($patch['position'] == "main") {
 			?>
 			<h3><?=tr("Test code:")?></h3>
@@ -342,6 +340,7 @@ function show_test($task, $result, $test) {
 //if ($nastavnik)
 //	if ($sakriven == 1) print "<p>Test je sakriven (nije vidljiv studentima)</p>\n"; else print "<p>Test je javan (vidljiv studentima)</p>\n";
 
+	if (array_key_exists('execute', $the_test)) {
 	?>
 	<hr>
 	<h3><?=tr("Program input/output")?></h3>
@@ -370,7 +369,7 @@ function show_test($task, $result, $test) {
 			<script>
 				expected[<?=$exno?>] = '<?=escape_javascript($expect)?>';
 			</script>
-			<td><span class="fail"><?=escape_output($expect)?></span></td></tr>
+			<td><span class="fail"><code><?=escape_output($expect)?></code></span></td></tr>
 			<tr><td>&nbsp;</td>
 			<td><a href="#" onclick="return showDiff(<?=$exno?>)" id="showDiffLink"><?=tr("Diff")?></a></td></tr>
 			<?php
@@ -403,7 +402,7 @@ function show_test($task, $result, $test) {
 		<?php
 	}
 	
-	if (array_key_exists('output', $test_result['tools']['execute'])) {
+	if (array_key_exists('execute', $test_result['tools']) && array_key_exists('output', $test_result['tools']['execute'])) {
 		?>
 		<script>
 		var programOutput = '<?=escape_javascript($test_result['tools']['execute']['output'])?>';
@@ -413,7 +412,7 @@ function show_test($task, $result, $test) {
 		<?php 
 	}
 	
-	if(array_key_exists('duration', $test_result['tools']['execute'])) {
+	if(array_key_exists('execute', $test_result['tools']) && array_key_exists('duration', $test_result['tools']['execute'])) {
 		?>
 		<tr><td><?=tr("Execution time (rounded):")?></td>
 		<td><?=$test_result['tools']['execute']['duration']?> <?=tr("seconds")?></td></tr>
@@ -422,8 +421,10 @@ function show_test($task, $result, $test) {
 	
 	?>
 	</table>
-<?php
+	<?php
 
+	}
+	
 	?>
 	<hr>
 	<h3><?=tr("Test report:")?></h3>

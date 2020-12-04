@@ -16,7 +16,7 @@ function showDiff(expectNo) {
 	var link = document.getElementById('showDiffLink');
 	
 	if (diffShown) {
-		output.innerHTML = "<span class=\"success\"><code>" + programOutput + "</code></span>";
+		output.innerHTML = "<span class=\"success\"><code>" + programOutput.replace(/\n/g, "<br>").replace(/ /g, "&nbsp;") + "</code></span>";
 		link.textContent = diffLabel;
 		diffShown = false;
 		return false;
@@ -26,11 +26,11 @@ function showDiff(expectNo) {
 	output.innerHTML = "";
 	
 	diff.forEach(function(part) {
-		var partClass = part.added ? 'fail' :
-		part.removed ? 'success' : 'neither';
+		var partClass = part.added ? 'fail' : part.removed ? 'success' : 'neither';
 		
 		var span = document.createElement('span');
 		span.style.class = partClass;
+		span.className = partClass;
 		
 		if (part.value === "\n") { part.value = "\\n"; }
 		
