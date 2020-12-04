@@ -43,7 +43,8 @@ class Gcc extends ExternalTool {
 				$function = $matches[2];
 				// Do nothing
 			}
-			else if (preg_match("/^([^\:\s]*?):(\d+):(\d+): error: (.*?)$/", $line, $matches)) {
+			else if (preg_match("/^([^\:\s]*?):(\d+):(\d+): error: (.*?)$/", $line, $matches)
+				|| preg_match("/^([^\:\s]*?):(\d+):(\d+): fatal error: (.*?)$/", $line, $matches)) {
 				if (!empty($current_message)) $this->result['parsed_output'][] = $current_message;
 				$current_message = array();
 				
