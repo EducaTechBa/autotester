@@ -188,7 +188,8 @@ function process_program($task, $program_id) {
 		$k = json_query("setResult", array("id" => $program_id, "client" => $clientId, "result" => json_encode($result)), "POST" );
 	else
 		Utils::debugLog( "Stop testing per request from server", 1 );
-		
+	
+	unlink($program['zip']);
 } // End process_program
 
 
