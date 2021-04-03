@@ -191,6 +191,8 @@ class ExternalTool extends AbstractTool {
 		if ($env['limit_output'] > 0 && strlen($result['output']) > $env['limit_output'])
 			$result['output'] = substr($result['output'], 0, $env['limit_output']);
 		$result['output'] = Utils::clearUnicode($result['output']);
+		// Remove null characters from output
+		$result['output'] = str_replace("\0", "", $result['output']);
 		Utils::debugLog( $result['output'], 3 );
 		
 		// Did it fail to finish before $timeout ?
