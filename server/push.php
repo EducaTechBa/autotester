@@ -149,7 +149,7 @@ function cli_parse_arguments($argc, $argv) {
 
 // Parse web arguments and invoke functions
 function ws_parse_arguments() {
-	global $conf_allow_push, $conf_allow_pull, $conf_push_delete_done;
+	global $conf_allow_push, $conf_allow_pull, $conf_push_delete_done, $conf_protocol_version;
 	
 	$pull_actions = array("getTaskList", "getTaskData", "getProgramData", "listPrograms", "getCurrent", "nextTask", "assignProgram", 
 	"setProgramStatus", "setCompileResult", "setExecuteResult", "setDebugResult", "setProfileResult", "setTestResult", "getFile");
@@ -171,7 +171,7 @@ function ws_parse_arguments() {
 			
 		// No failure modes
 		$task = Task::create( $taskDesc );
-		return array( "success" => true, "data" => $task->id );
+		return array( "success" => true, "data" => $task->id, "message" => $task->message );
 	}
 	
 	if ($action == "getTask") {
@@ -191,13 +191,13 @@ function ws_parse_arguments() {
 		try {
 			$task = Task::fromId( $progDesc['task'] );
 		} catch(Exception $e) {
-			return array( "success" => false, "code" => "ERR004", "message" => "Unknown task" );
+			return array( "success" => false, "code" => "ERR004", "message" => "Unknown task ".$progDesc['task'] );
 		}
 		
 		if (!array_key_exists("language", $progDesc)) {
 			if (array_key_exists("language", $task->desc))
 				$progDesc['language'] = $task->desc['language'];
-			if (array_key_exists("languages", $task->desc) && is_array($task->desc['languages']))
+			else if (array_key_exists("languages", $task->desc) && is_array($task->desc['languages']))
 				$progDesc['language'] = $task->desc['languages'][0];
 		}
 		
@@ -297,7 +297,7 @@ function ws_parse_arguments() {
 			}
 		}
 		$queue = new Queue;
-		$queue->add( $program->desc['task'], $program->id, false );
+		$queue->add( $program->desc['task'], $program->id );
 		
 		return array( "success" => true );
 	}
