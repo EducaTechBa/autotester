@@ -45,7 +45,7 @@ foreach($data['test_specifications'] as $test) {
 		$test2['compile[debug]'] = array();
 		
 	$test2['execute'] = array();
-	if (array_key_exists("stdin", $test['running_params']) && !empty($test['running_params']['stdin'])) {
+	if (array_key_exists("stdin", $test['running_params']) && !empty($test['running_params']['stdin']) && $test['running_params']['stdin'] !== "0") {
 		$test2['execute']['environment'] = array( "stdin" => $test['running_params']['stdin'] );
 	}
 	$test2['execute']['expect'] = [];
