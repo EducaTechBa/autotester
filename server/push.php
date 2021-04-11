@@ -62,6 +62,7 @@ Available PARAMS are:
  add-program TASKID NAME FILE
 			Adds program file with given name in given task
  retry TASKID PROGID	Retry program PROGID in task TASKID
+ clean-programs AGE		Purge programs older than AGE
  help			This help page
 
 <?php
@@ -140,6 +141,14 @@ function cli_parse_arguments($argc, $argv) {
 		if (!is_numeric($argv[2]) || !is_numeric($argv[3]))
 			return error('ERR201', "ID should be an integer.");
 		return retryProgram($argv[2], $argv[3]);
+	}
+	if ($argv[1] == "clean-programs" && $argc==3) {
+		if (!is_numeric($argv[2]))
+			return error('ERR201', "AGE should be an integer (seconds from now)");
+		$queue = new Queue;
+		$result = $queue->removeOldPrograms( $argv[2] );
+		print "Removed " . $result['removed']. " programs.\n";
+		return true;
 	}
 	
 	usage();
@@ -457,6 +466,11 @@ function ws_parse_arguments() {
 	if ($action == "getStats") {
 		$queue = new Queue;
 		return array( "success" => true, "data" => $queue->getStats() );
+	}
+	
+	if ($action == "cleanupPrograms") {
+		$queue = new Queue;
+		return array( "success" => true, "data" => $queue->removeOldPrograms( 60*60*24 ) );
 	}
 	return array( "success" => true, "message" => "Autotester server v$conf_protocol_version is running. No action specified.", "data" => [] );
 }

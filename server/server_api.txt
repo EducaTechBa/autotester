@@ -249,6 +249,14 @@ The following actions are generally informative actions for querying the situati
 * getStats (GET)
 
   Lightweight service that simply returns a number of programs in each cathegory (queued, assigned, finished)
+  
+
+The following actions are administrative/maintenance tasks.
+
+* cleanupPrograms (GET)
+
+  Remove all programs older than 24 hours from queue and filesystem (cli command "clean-programs" allows to specify time period).
+    
 
   
 Error codes

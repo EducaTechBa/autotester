@@ -112,4 +112,26 @@ class Program {
 		return json_decode( file_get_contents($resultPath), true );
 
 	}
+	
+	// Delete all data related to program
+	public function remove() {
+		global $conf_basepath;
+		$programPath = $conf_basepath . "/programs/" . $this->id;
+		self::rmMinusR($programPath);
+		rmdir($programPath);
+	}
+	
+	// Delete directory with subdirectories
+	public static function rmMinusR($path) 
+	{
+		$files = glob($path."/*"); // There should be no hidden files...
+		foreach ($files as $file) {
+			if (is_dir($file)) {
+				self::rmMinusR($file);
+				rmdir($file);
+			} else {
+				unlink($file);
+			}
+		}
+	}
 }

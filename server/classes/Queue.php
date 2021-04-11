@@ -329,6 +329,49 @@ class Queue {
 	public function getStats() {
 		return array( "queued" => count($this->queue), "assigned" => count($this->assigned), "finished" => count($this->finished), "rejected" => count($this->rejected) );
 	}
-}
+	
+	// Remove old programs from queue (and filesystem) ($age is seconds from now)
+	public function removeOldPrograms($age) {
+		$now = time();
+		$removed = 0;
+		$tasksRemovePrograms = []; // We will do it later to minimize impact on queue
+		
+		// Avoid code duplication
+		$removeProgramFunc = function($key, $item, &$tasksRemovePrograms, &$removed, &$queue, $now, $age) {
+			try {
+				$program = Program::fromId($item['program']);
+				$programFile = $program->getFilePath();
+				if ($now - filemtime($programFile) > $age) {
+					if (!array_key_exists($item['task'], $tasksRemovePrograms))
+						$tasksRemovePrograms[$item['task']] = [ $item['program'] ];
+					else
+						$tasksRemovePrograms[$item['task']][] = $item['program'];
+					$program->remove();
+					unset($queue[$key]);
+					$removed++;
+				}
+			} catch(Exception $e) {
+				// Progrem doesn't actually exist
+				unset($queue[$key]);
+				$removed++;
+			}
+		};
+		
+		// Remove old programs
+		foreach($this->finished as $key => $item)
+			$removeProgramFunc($key, $item, $tasksRemovePrograms, $removed, $this->finished, $now, $age);
+		foreach($this->assigned as $key => $item)
+			$removeProgramFunc($key, $item, $tasksRemovePrograms, $removed, $this->assigned, $now, $age);
+		$this->writeQueue();
+		
+		// Remove programs from tasks
+		foreach($tasksRemovePrograms as $taskId => $programs) {
+			$task = Task::fromId($taskId);
+			foreach($programs as $programId)
+				$task->removeProgram($programId);
+		}
+		
+		return array( "removed" => $removed );
+	}}
 
 ?>
