@@ -2,7 +2,7 @@
 
 
 // AUTOTESTER - automated compiling, execution, debugging, testing and profiling
-// (c) Vedran Ljubovic and others 2014-2019.
+// (c) Vedran Ljubovic and others 2014-2021.
 //
 //     This program is free software: you can redistribute it and/or modify
 //     it under the terms of the GNU General Public License as published by
@@ -67,15 +67,22 @@ class Program {
 	
 	// Sets ZIP file for program, returns true if file is the same as existing
 	public function setFile($file) {
-		global $conf_basepath;
+		global $conf_basepath, $conf_unzip_command;
 		
 		$zippath = $this->getFilePath();
 		
 		$same = false;
 		if (file_exists($zippath)) {
-			$oldmd5 = md5_file($zippath);
-			$newmd5 = md5_file($file);
-			if ($oldmd5 == $newmd5) $same = true;
+			$oldData = explode("\n", trim(`$conf_unzip_command -vl $zippath`));
+			$newData = explode("\n", trim(`$conf_unzip_command -vl $file`));
+			if (count($oldData) == count($newData)) {
+				$same = true;
+				for ($i = 2; $i < count($oldData) - 2; $i++) {
+					$oldCrc = explode(" ", trim(preg_replace("/\s+/", " ", $oldData[$i])))[6];
+					$newCrc = explode(" ", trim(preg_replace("/\s+/", " ", $newData[$i])))[6];
+					if ($oldCrc != $newCrc) $same = false;
+				}
+			}
 		}
 		
 		$resultPath = $conf_basepath . "/programs/" . $this->id . "/result.json";
