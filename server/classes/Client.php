@@ -159,4 +159,23 @@ class Client {
 		}
 		return $clients;
 	}
+	
+	// Remove clients that are not responding to pings for more than $age seconds
+	public static function removeOldClients($age) {
+		$clients = self::listClients(true);
+		$removed = 0;
+		$queue = new Queue;
+		$now = time();
+		
+		foreach($clients as &$client) {
+			if ($now - $client->getLastTime() > $age) {
+				$queue->removeClient($client);
+				$client->unregister();
+				$removed++;
+			}
+		}
+		$queue->writeQueue();
+		
+		return array( "removed" => $removed );
+	}
 }

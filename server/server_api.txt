@@ -257,6 +257,10 @@ The following actions are administrative/maintenance tasks.
 
   Remove all programs older than 24 hours from queue and filesystem (cli command "clean-programs" allows to specify time period).
     
+* cleanupPrograms (GET)
+
+  Remove all clients who didn't ping the server for more than 24 hours (cli command "clean-clients" allows to specify time period). If there was power failure on client, it can happen that client never unregisters so this should be called periodically to remove such old clients.
+
 
   
 Error codes
