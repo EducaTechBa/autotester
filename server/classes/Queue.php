@@ -2,7 +2,7 @@
 
 
 // AUTOTESTER - automated compiling, execution, debugging, testing and profiling
-// (c) Vedran Ljubovic and others 2014-2019.
+// (c) Vedran Ljubovic and others 2014-2021.
 //
 //     This program is free software: you can redistribute it and/or modify
 //     it under the terms of the GNU General Public License as published by
@@ -56,6 +56,7 @@ class Queue {
 		if (flock($queueFp, LOCK_SH)) {
 			while ($line = fgets($queueFp)) {
 				list($task, $program, $status) = explode("/", trim($line));
+				if (intval($task) == 0) continue;
 				if ($status == "Q")
 					$this->queue[] = array( "task" => $task, "program" => $program );
 				else if ($status == "F")
@@ -107,7 +108,7 @@ class Queue {
 	}
 	
 	// Add task and program to queue
-	public function add($taskId, $programId, $same) {
+	public function add($taskId, $programId, $same = false) {
 		// Don't add again if already queued for testing
 		foreach($this->queue as $item)
 			if ($item['program'] == $programId)
@@ -119,8 +120,7 @@ class Queue {
 				unset($this->assigned[$key]);
 		foreach($this->finished as $key => $item)
 			if ($item['program'] == $programId)
-				// If task is finished and same, just return old results
-				if ($same) 
+				if ($same) // If task is finished and same, just return old results
 					return;
 				else 
 					unset($this->finished[$key]);
@@ -319,7 +319,15 @@ class Queue {
 		foreach($this->assigned as $item) {
 			$task = Task::fromId($item['task']);
 			$program = Program::fromId($item['program']);
-			$client = Client::fromId($item['client']);
+			
+			try {
+				$client = Client::fromId($item['client']);
+			} catch(Exception $e) {
+				$client = new stdClass(); 
+				$client->id = 0;
+				$client->desc = ["name" => "unknown (client has gone away)"] ;
+			}
+			
 			$info[] = array( "id" => $program->id, "name" => $program->desc['name'], "task" => $task->id, "task_name" => $task->desc['name'], "client" => $client->id, "clientname" => $client->desc['name'] );
 		}
 		return $info;
@@ -372,6 +380,7 @@ class Queue {
 		}
 		
 		return array( "removed" => $removed );
-	}}
+	}
+}
 
 ?>
