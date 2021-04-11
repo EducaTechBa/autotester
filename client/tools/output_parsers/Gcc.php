@@ -45,6 +45,7 @@ class Gcc extends ExternalTool {
 			}
 			else if (preg_match("/^([^\:\s]*?):(\d+):(\d+): error: (.*?)$/", $line, $matches)
 				|| preg_match("/^([^\:\s]*?):(\d+):(\d+): fatal error: (.*?)$/", $line, $matches)) {
+				if (strstr($matches[4], "this will be reported")) continue;
 				if (!empty($current_message)) $this->result['parsed_output'][] = $current_message;
 				$current_message = array();
 				
@@ -57,7 +58,9 @@ class Gcc extends ExternalTool {
 				$current_message['message'] = $this->gcc_cleanup($matches[4]);
 				//$current_message['output'] = $line;
 			}
-			else if (preg_match("/^([^\:\s]*?):(\d+):(\d+): warning: (.*?)$/", $line, $matches)) {
+			else if (preg_match("/^([^\:\s]*?):(\d+):(\d+): warning: (.*?)$/", $line, $matches) 
+				|| preg_match("/^([^\:\s]*?):(\d+): warning: (.*?)$/", $line, $matches)) {
+				if (count($matches) == 5 && strstr($matches[4], "this will be reported")) continue;
 				if (!empty($current_message)) $this->result['parsed_output'][] = $current_message;
 				$current_message = array();
 				
@@ -66,8 +69,12 @@ class Gcc extends ExternalTool {
 				$current_message['type'] = "warning";
 				$current_message['file'] = $this->test->removeBasePath( $matches[1] );
 				$current_message['line'] = $matches[2];
-				$current_message['col'] = $matches[3];
-				$current_message['message'] = $this->gcc_cleanup($matches[4]);
+				if (count($matches) == 5) {
+					$current_message['col'] = $matches[3];
+					$current_message['message'] = $this->gcc_cleanup($matches[4]);
+				} else {
+					$current_message['message'] = $this->gcc_cleanup($matches[3]);
+				}
 				//$current_message['output'] = $line;
 			} 
 			else if (preg_match("/^([^\:\s]*?):(\d+):(\d+): note: (.*?)$/", $line, $matches)) {
@@ -97,7 +104,11 @@ class Gcc extends ExternalTool {
 			else {
 				if (!empty($current_message)) {
 					//$current_message['output'] .= $line;
-					if (empty($current_message['code'])) $current_message['code'] = trim($line);
+					if (empty($current_message['code'])) {
+						$line = trim($line);
+						$line = preg_replace("/^\d+ \|\s+/", "", $line);
+						$current_message['code'] = trim($line);
+					}
 				}
 			}
 		}
