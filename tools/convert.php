@@ -16,8 +16,8 @@ $data2['tools'] = array (
 	"profile[sgcheck]" => array( "require" => "valgrind", "features" => array( "sgcheck" ), "environment" => array( "timeout" => 10) ),
 );
 if ($data['language'] == "C++") {
-	$data2['tools']['compile']['features'][] = "C++11";
-	$data2['tools']['compile[debug]']['features'][] = "C++11";
+	$data2['tools']['compile']['features'][] = "C++14";
+	$data2['tools']['compile[debug]']['features'][] = "C++14";
 }
 
 $data2['tests'] = array( 
@@ -30,7 +30,7 @@ foreach($data['test_specifications'] as $test) {
 		"id" => $test['id'],
 	);
 	$patch = array();
-	if ($test['code'] != "_main();")
+	if ($test['code'] != "_main();" || !$first && $oldtest['code'] != "_main();")
 		$patch[] = array( "position" => "main", "code" => $test['code'], "use_markers" => true );
 	if ($test['global_top'] != "")
 		$patch[] = array( "position" => "top_of_file", "code" => $test['global_top'], "use_markers" => true );
@@ -65,10 +65,12 @@ foreach($data['test_specifications'] as $test) {
 	unset ($test2['profile[memcheck]']['expect']);
 	unset ($test2['profile[sgcheck]']['expect']);
 	
-	if ($test['code'] == "_main();") 
+	if ($test['code'] == "_main();" && !$first && $oldtest['code'] == "_main();") 
 		$test2['options'] = array( "reuse" );
 	
 	$data2['tests'][] = $test2;
+	$oldtest2 = $test2;
+	$oldtest = $test;
 	
 	$first = false;
 }
