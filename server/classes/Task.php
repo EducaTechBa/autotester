@@ -120,6 +120,28 @@ class Task {
 		}
 		return $programs;
 	}
+
+	// Remove program from task 
+	// This doesn't actually delete a Program object. Use Program::remove()
+	public function removeProgram($programId) {
+		global $conf_basepath;
+		if (intval($programId) == 0) return;
+		$taskProgramsPath = $conf_basepath . "/tasks/" . $this->id . "/programs";
+		if (file_exists($taskProgramsPath)) {
+			$taskPrograms = file($taskProgramsPath);
+			foreach($taskPrograms as $key => $value) {
+				if (intval($value) == intval($programId))
+					unset($taskPrograms[$key]);
+				// Remove empty lines
+				if (intval($value) == 0)
+					unset($taskPrograms[$key]);
+			}
+			// Remove keys from array
+			$taskPrograms = array_values($taskPrograms);
+			// Members of $taskPrograms already end with \n (that's how file() works)
+			file_put_contents($taskProgramsPath, join("", $taskPrograms));
+		}
+	}
 	
 	// Static method that returns a list of all known tasks
 	public static function listTasks() {
