@@ -284,12 +284,45 @@ class CCpp extends Language {
 		}
 		return $pos;
 	}
-
+	
+	// It's simpler to remove all comments from sourcecode in advance
+	private function replace_comments_with_whitespace($sourcecode)
+	{
+		global $conf_verbosity;
+		
+		if ($conf_verbosity>2) print "replace_comments_with_whitespace\n";
+		$i=0;
+		do {
+			$c_comment = strpos($sourcecode, "/*", $i);
+			$cpp_comment = strpos($sourcecode, "//", $i);
+			if ($c_comment !== false && ($c_comment < $cpp_comment || $cpp_comment === false)) {
+				$end = strpos($sourcecode, "*/", $c_comment);
+				if ($end === false) {
+					if ($conf_verbosity>1) $this->parser_error("C-style comment doesn't end", "", $string, $i);
+					$end = strlen($sourcecode) - 2;
+				}
+				for ($i=$c_comment; $i<=$end+1; $i++)
+					$sourcecode[$i] = " ";
+			}
+			if ($cpp_comment !== false && ($cpp_comment < $c_comment || $c_comment === false)) {
+				$end = strpos($sourcecode, "\n", $cpp_comment);
+				if ($end === false) {
+					$end = strlen($sourcecode);
+				}
+				for ($i=$cpp_comment; $i<$end; $i++)
+					$sourcecode[$i] = " ";
+			}
+		} while ($c_comment !== false || $cpp_comment !== false);
+		if ($conf_verbosity>2) print "replace_comments_with_whitespace finished\n";
+		return $sourcecode;
+	}
 
 	// Find symbols in global scope to know which files need to be included
 	private function parse_c_cpp($sourcecode, $language, $file /* Only used for error messages... */) 
 	{
 		global $conf_verbosity;
+		
+		$sourcecode = $this->replace_comments_with_whitespace($sourcecode);
 
 		$symbols = array();
 
@@ -312,18 +345,20 @@ class CCpp extends Language {
 				$i = $this->skip_ident_chars($sourcecode, $i);
 				$define_name = substr($sourcecode, $define_begin, $i-$define_begin);
 				if ($conf_verbosity>2) print "Define $define_name\n";
-				$symbols[] = array( 'name' => $define_name, 'pos' => $define_begin );
+				$symbols[] = array( 'name' => $define_name, 'pos' => $define_begin, 'type' => "define" );
 				
 				while (1) {
 					$i = $this->skip_to_newline($sourcecode, $i);
-					if ($sourcecode[$i-1] == "\\") $i+=2;
+					if ($i < strlen($sourcecode) - 2 && $sourcecode[$i-1] == "\\") $i+=2; // multiline defines
 					else break;
 				}
 				continue;
 			}
 			
 			// Find classes and structs
-			if (substr($sourcecode, $i, 5) == "class" || substr($sourcecode, $i, 5) == "struct") {
+			if (substr($sourcecode, $i, 5) == "class" || substr($sourcecode, $i, 6) == "struct") {
+				if (substr($sourcecode, $i, 5) == "class") $symbol_type = "class"; else { $symbol_type = "struct"; $i++; }
+				
 				$i = $this->skip_whitespace($sourcecode, $i+5); 
 				
 				// If a valid identifier doesn't follow the keyword, syntax error
@@ -351,8 +386,8 @@ class CCpp extends Language {
 					continue;
 				}
 				
-				if ($conf_verbosity>2) print "Class $class_name\n";
-				$symbols[] = array( 'name' => $class_name, 'pos' => $class_begin );
+				if ($conf_verbosity>2) print "$symbol_type $class_name\n";
+				$symbols[] = array( 'name' => $class_name, 'pos' => $class_begin, 'type' => $symbol_type );
 				
 				// Skip to end of block
 				$i = $this->find_matching($sourcecode, $curly_pos);
@@ -362,20 +397,8 @@ class CCpp extends Language {
 				}
 			}
 			
-			// Skip C-style comments
-			if (substr($sourcecode, $i, 2) == "/*") {
-				// Skip to end of comment
-				$eoc = strpos($sourcecode, "*/", $i);
-				if ($eoc === false) {
-					if ($conf_verbosity>1) $this->parser_error("C-style comment doesn't end", $file, $sourcecode, $i);
-					break;
-				}
-				$i = $eoc+1;
-				continue;
-			}
-			
-			// Skip other preprocessor directives and C++-style comments
-			if ($sourcecode[$i] == "#" || $i<strlen($sourcecode)-1 && substr($sourcecode, $i, 2) == "//") {
+			// Skip other preprocessor directives
+			if ($sourcecode[$i] == "#") {
 				// Skip to newline
 				$i = $this->skip_to_newline($sourcecode, $i);
 				continue;
@@ -405,14 +428,14 @@ class CCpp extends Language {
 				}
 			}
 			
-			// The rest is likely an identifier of some kind in global scope - we want that!
+			// The rest is likely an identifier of some kind - we want that!
 			if ($this->ident_char($sourcecode[$i])) {
 				// Skip keyword const
 				if (substr($sourcecode, $i, 5) == "const")
 					$i = $this->skip_whitespace($sourcecode, $i+5); 
 
 				// skip type
-				$multiword = array("long double", "unsigned int", "unsigned long", "short int", "unsigned short"); // TODO add others
+				$multiword = array("long double", "unsigned int", "unsigned long", "short int", "unsigned short", "long long int", "long long", "unsigned char", "signed char", "enum class"); // TODO add others
 				$found = false;
 				foreach($multiword as $type) 
 					if (strlen($sourcecode)>$i+strlen($type) && substr($sourcecode, $i, strlen($type)) == $type) {
@@ -496,10 +519,13 @@ class CCpp extends Language {
 							$ident_name = substr($sourcecode, $ident_begin, $i-$ident_begin);
 						}
 
-						if ($conf_verbosity>2) print "Skip class method $class_name::$ident_name\n";
+						if ($conf_verbosity>2) print "Class method $class_name::$ident_name\n";
+						$symbol = array( 'name' => $ident_name, 'pos' => $ident_begin, 'type' => "identifier", "parent" => $class_name );
 					} else {
 						if ($conf_verbosity>2) print "Ident $ident_name\n";
-						$symbols[] = array( 'name' => $ident_name, 'pos' => $ident_begin );
+						$symbol = array( 'name' => $ident_name, 'pos' => $ident_begin, 'type' => "identifier" );
+						$type = substr($sourcecode, $start_type, $end_type-$start_type);
+						if ($type == "enum" || $type == "enum class") $symbol['type'] = "enum";
 					}
 				} else {
 					// This catches two cases not handled with above code
@@ -512,12 +538,13 @@ class CCpp extends Language {
 					// Typeless idents (possible...)
 					if ($start_ns == -1) {
 						if ($conf_verbosity>2) print "Typeless ident $ident_name\n";
-						$symbols[] = array( 'name' => $ident_name, 'pos' => $start_type );
+						$symbol = array( 'name' => $ident_name, 'pos' => $start_type, 'type' => 'typeless identifier' );
 
 					// Ctor, dtor and such
 					} else {
 						$class_name = substr($sourcecode, $start_ns, $end_ns-$start_ns);
-						if ($conf_verbosity>2) print "Skip ctor-like ident $class_name::$ident_name\n";
+						if ($conf_verbosity>2) print "Ctor-like ident $class_name::$ident_name\n";
+						$symbol = array( 'name' => $ident_name, 'pos' => $ident_begin, 'type' => "ctor", "parent" => $class_name );
 
 						// In case of constructor, we need to skip the initialization list
 						// This wouldn't be neccessary if not for C++11 style initializers using curly braces e.g.
@@ -527,6 +554,17 @@ class CCpp extends Language {
 					}
 				}
 				
+				if ($ident_name == "operator") {
+					$i = $this->skip_whitespace($sourcecode, $i);
+					$symbol['name'] .= $sourcecode[$i];
+					if ($sourcecode[$i] == '(' || $sourcecode[$i] == '[') {
+						$i = $this->find_matching($sourcecode, $i);
+						$symbol['name'] .= $sourcecode[$i];
+					}
+					$i++;
+				}
+
+				
 				// skip to semicolon or end of block, whichever comes first
 				do {
 					$repeat = false;
@@ -534,11 +572,42 @@ class CCpp extends Language {
 					$curly_pos = strpos($sourcecode, "{", $i);
 					// BUT if curly is inside braces, skip that too
 					$open_brace_pos = strpos($sourcecode, "(", $i);
+					
 					if ($open_brace_pos && $open_brace_pos < $sc_pos && $open_brace_pos < $curly_pos) {
+						if ($sc_pos !== false && $sc_pos < $curly_pos) $symbol['type'] = "function prototype"; else $symbol['type'] = "function";
 						$i = $this->find_matching($sourcecode, $open_brace_pos);
 						$repeat = true;
+					} 
+					
+					// Detect arrays and multiple declarations separated with comma
+					else if ($sc_pos !== false && $sc_pos < $curly_pos) {
+						$bracket = strpos($sourcecode, "[", $i);
+						$comma_pos = strpos($sourcecode, ",", $i);
+						
+						if ($bracket !== false && $bracket < $sc_pos && $bracket < $comma_pos)
+							$symbol['type'] = "array";
+							
+						while ($comma_pos !== false && $comma_pos < $sc_pos) {
+							$symbols[] = $symbol;
+							
+							$ident_begin = $this->skip_whitespace($sourcecode, $comma_pos+1);
+							$ident_end = $this->skip_ident_chars($sourcecode, $ident_begin);
+							$ident_name = substr($sourcecode, $ident_begin, $ident_end-$ident_begin);
+							$bracket = strpos($sourcecode, "[", $ident_begin);
+							
+							$symbol['name'] = $ident_name;
+							$symbol['pos'] = $ident_begin;
+							$comma_pos = strpos($sourcecode, ",", $ident_begin);
+							if ($bracket !== false && $bracket < $sc_pos && $bracket < $comma_pos)
+								$symbol['type'] = "array";
+							else
+								$symbol['type'] = "identifier";
+						}
 					}
+					
 				} while ($repeat);
+				
+				$symbols[] = $symbol;
 				
 				// there is neither curly nor semicolon, syntax error
 				if ($curly_pos === false && $sc_pos === false) {
@@ -548,11 +617,12 @@ class CCpp extends Language {
 
 				else if ($curly_pos === false || ($sc_pos !== false && $sc_pos < $curly_pos))
 					$i = $sc_pos;
-				else
+				else {
 					$i = $this->find_matching($sourcecode, $curly_pos);
-				if ($i==strlen($sourcecode)) {
-					if ($conf_verbosity>1) $this->parser_error("missing closed curly", $file, $sourcecode, $curly_pos);
-					break;
+					if ($i==strlen($sourcecode)) {
+						if ($conf_verbosity>1) $this->parser_error("missing closed curly", $file, $sourcecode, $curly_pos);
+						break;
+					}
 				}
 			}
 		}
