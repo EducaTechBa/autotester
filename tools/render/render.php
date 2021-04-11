@@ -27,6 +27,8 @@ function tr($txt) {
 <body bgcolor="#ffffff">
 <?php
 
+if (isset($_REQUEST['title']))
+	print "<h2>" . $_REQUEST['title'] . "</h2>\n";
 
 // List of test status code labels
 $statuses = array(
@@ -170,7 +172,6 @@ function escape_javascript($s) {
 	global $newlines;
 	$s = str_replace($newlines, "\\n", trim($s));
 	$s = str_replace("'", "\'", $s);
-	$s = preg_replace("/\s+\\\\n/", "\\n", $s);
 	$s = preg_replace("/\\\\([^n])/", "\\\\\\\\\\\\$1", $s);
 	return $s;
 }
@@ -191,12 +192,25 @@ function message_position($msg) {
 function generate_report($the_test, $test_result) {
 	global $newlines, $statuses;
 	
+	if (!is_array($test_result) || !array_key_exists("status", $test_result)) {
+		$tmpfname = tempnam("/tmp/render-debug-data", "FOO");
+		file_put_contents($tmpfname, "INVALID OR CORRUPT TEST DATA:\n" . json_encode($the_test, JSON_PRETTY_PRINT) . "\n\n" . json_encode($test_result, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
+		return "INVALID OR CORRUPT TEST DATA";
+	}
+	
+	$status_text = "unknown status " . $test_result['status'];
 	foreach($statuses as $st)
 		if ($st['code'] == $test_result['status']) 
 			$status_text = $st['description'];
-			
+				
 	$report = tr("TEST STATUS: ") . $status_text . "\n\n";
 	$raw = "";
+	
+	if (!array_key_exists("tools", $test_result)) {
+		$tmpfname = tempnam("/tmp/render-debug-data", "FOO");
+		file_put_contents($tmpfname, "NO TOOLS:\n" . json_encode($the_test, JSON_PRETTY_PRINT) . "\n\n" . json_encode($test_result, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
+		return $report;
+	}
 	
 	if (array_key_exists('debug', $test_result['tools'])) {
 		$dr = $test_result['tools']['debug'];
@@ -209,6 +223,26 @@ function generate_report($the_test, $test_result) {
 			$raw .= tr("DEBUGGER OUTPUT:") . "\n". $dr['output'] . "\n\n";
 	}
 
+	$cr = [];
+	if (array_key_exists('compile', $test_result['tools']))
+		$cr = $test_result['tools']['compile'];
+	else if (array_key_exists('compile[debug]', $test_result['tools']))
+		$cr = $test_result['tools']['compile[debug]'];
+	if (array_key_exists('parsed_output', $cr) && !empty($cr['parsed_output'])) {
+		$report .= tr("COMPILER MESSAGES:") . "\n";
+		foreach($cr['parsed_output'] as $msg) {
+			if ($msg['type'] == "warning")
+				$report .= tr("Warning in line ");
+			else if ($msg['type'] == "error")
+				$report .= tr("Error in line ");
+			else
+				$report .= tr("Message in line ");
+			$report .= message_position($msg) . ":\n" . $msg['message'] . "\n\n";
+		}
+	}
+	if (array_key_exists('output', $cr) && !empty($cr['output']))
+		$raw .= tr("COMPILER OUTPUT:") . "\n" . $cr['output'] . "\n\n";
+
 	if (array_key_exists('profile[memcheck]', $test_result['tools']) && $test_result['tools']['profile[memcheck]']['status'] > 1)
 		$pr = $test_result['tools']['profile[memcheck]'];
 	else if (array_key_exists('profile[sgcheck]', $test_result['tools']))
@@ -216,7 +250,7 @@ function generate_report($the_test, $test_result) {
 	else
 		$pr = [];
 
-	if (array_key_exists('parsed_output', $pr)) {
+	if (array_key_exists('parsed_output', $pr) && !empty($pr['parsed_output'])) {
 		$report .= tr("PROFILER MESSAGES:")."\n";
 		foreach($pr['parsed_output'] as $msg) {
 			$report .= tr("Error in line ") . message_position($msg);
@@ -227,19 +261,6 @@ function generate_report($the_test, $test_result) {
 	}
 	if (array_key_exists('output', $pr) && !empty($pr['output']) && $pr['status'] > 1)
 		$raw .= tr("PROFILER OUTPUT:") . "\n". $pr['output'] . "\n\n";
-
-	$cr = [];
-	if (array_key_exists('compile', $test_result['tools']))
-		$cr = $test_result['tools']['compile'];
-	else if (array_key_exists('compile[debug]', $test_result['tools']))
-		$cr = $test_result['tools']['compile[debug]'];
-	if (array_key_exists('parsed_output', $cr)) {
-		$report .= tr("COMPILER MESSAGES:") . "\n";
-		foreach($cr['parsed_output'] as $msg)
-			$report .= tr("Error in line ") . message_position($msg) . ":\n" . $msg['message'] . "\n\n";
-	}
-	if (array_key_exists('output', $cr) && !empty($cr['output']))
-		$raw .= tr("COMPILER OUTPUT:") . "\n" . $cr['output'];
 
 	$report .= "\n\n$raw";
 	$report = str_replace($newlines, "<br>", $report);
@@ -310,19 +331,19 @@ function show_test($task, $result, $test) {
 	// Patch tool
 	if (array_key_exists('patch', $the_test))
 	foreach($the_test['patch'] as $patch) {
-		if ($patch['position'] == "main") {
+		if (!array_key_exists("position", $patch) || $patch['position'] == "main") {
 			?>
 			<h3><?=tr("Test code:")?></h3>
 			<pre><?=htmlspecialchars($patch['code']);?></pre>
 			<?php
 		}
-		if ($patch['position'] == "top_of_file") {
+		else if ($patch['position'] == "top_of_file") {
 			?>
 			<h3><?=tr("Global scope (top of file):")?></h3>
 			<pre><?=htmlspecialchars($patch['code']);?></pre>
 			<?php
 		}
-		if ($patch['position'] == "above_main") {
+		else if ($patch['position'] == "above_main") {
 			?>
 			<h3><?=tr("Global scope (above main):")?></h3>
 			<pre><?=htmlspecialchars($patch['code']);?></pre>
