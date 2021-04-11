@@ -2,7 +2,7 @@
 
 
 // AUTOTESTER - automated compiling, execution, debugging, testing and profiling
-// (c) Vedran Ljubovic and others 2014-2019.
+// (c) Vedran Ljubovic and others 2014-2021.
 //
 //     This program is free software: you can redistribute it and/or modify
 //     it under the terms of the GNU General Public License as published by
@@ -31,7 +31,9 @@ require_once("classes/Queue.php");
 sanity_check();
 
 if (php_sapi_name() == "cli") {
-	cli_parse_arguments($argc, $argv);
+	$result = cli_parse_arguments($argc, $argv);
+	if (is_array($result) && array_key_exists('success', $result) && $result['success'] == "false")
+		print $result['code'] . ": " . $result['message'] . "\n";
 	exit(0);
 }
 
