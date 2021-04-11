@@ -36,7 +36,7 @@ class ExternalTool extends AbstractTool {
 		"timeout_method" => "timeout", // "timeout_method" => "ulimit",
 		// "nice" => "10",
 		"limit_output" => 10000,
-		"limit_memory" => 0,
+		"memory" => 0,
 		"nice" => 0
 	);
 	
@@ -175,8 +175,8 @@ class ExternalTool extends AbstractTool {
 		if ($env['timeout'] > 0 && $env['timeout_method'] == "ulimit")
 			$cmd = "ulimit -t " . $env['timeout'] . "; $cmd";
 			
-		if ($env['limit_memory'] > 0)
-			$cmd = "ulimit -v " . $env['limit_memory'] . "; $cmd";
+		if ($env['memory'] > 0)
+			$cmd = "ulimit -v " . $env['memory'] . "; $cmd";
 			
 		// Always enable coredumps
 		$cmd = "ulimit -c 1000000; $cmd";
