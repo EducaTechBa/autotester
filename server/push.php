@@ -481,6 +481,10 @@ function ws_parse_arguments() {
 		return array( "success" => true, "data" => $queue->removeOldPrograms( 60*60*24 ) );
 	}
 	
+	if ($action == "cleanupTasks") {
+		return array( "success" => true, "data" => Task::removeOldTasks( 60*60*24 ) );
+	}
+	
 	if ($action == "cleanupClients") {
 		return array( "success" => true, "data" => Client::removeOldClients( 2*60*60*24 ) );
 	}

@@ -128,6 +128,56 @@ class Task {
 		}
 		return $tasks;
 	}
+	
+	// Cleanup program lists and remove tasks older than $age that have no active programs
+	public static function removeOldTasks($age) {
+		global $conf_basepath;
+		$now = time();
+		$empty = [];
+		$totalTasks = 0;
+		$queue = new Queue;
+		
+		foreach( scandir( $conf_basepath . "/tasks" ) as $entry ) {
+			if ($entry == "." || $entry == "..") continue;
+			try {
+				$task = Task::fromId($entry);
+			} catch(Exception $e) {
+				continue;
+			}
+			$totalTasks++;
+			
+			$taskProgramsPath = $conf_basepath . "/tasks/" . $task->id . "/programs";
+			if (file_exists($taskProgramsPath)) {
+				$taskPrograms = file($taskProgramsPath);
+				foreach($taskPrograms as $key => $value) {
+					// Remove empty lines
+					if (intval($value) == 0) {
+						unset($taskPrograms[$key]);
+						continue;
+					}
+					
+					// Remove nonexistant programs
+					try {
+						$program = Program::fromId(trim($value));
+					} catch(Exception $e) {
+						unset($taskPrograms[$key]);
+					}
+				}
+				
+				$taskPrograms = array_values($taskPrograms);
+				
+				file_put_contents($taskProgramsPath, join("", $taskPrograms));
+				if (empty($taskPrograms))
+					$empty[] = $task;
+			} else 
+				$empty[] = $task;
+		}
+		
+		//foreach($empty as $task) {
+			//$taskDescPath = $conf_basepath . "/tasks/" . $task->id . "/description.json";
+		
+		return array( "totalTasks" => $totalTasks, "empty" => count($empty));
+	}
 }
 
 
