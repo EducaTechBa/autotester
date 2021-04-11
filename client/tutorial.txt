@@ -181,11 +181,15 @@ All tools have certain common parameters that can be provided in task specificat
       
     * timeout : float
     
-      If the tool runs for longer than "timeout" seconds, it will be terminated and the test will fail.
-      
+      If the tool runs for longer than "timeout" seconds, it will be terminated and the test will fail (default is "10").
+       
     * memory : int
     
-      If the tool is using more than "memory" bytes of ram, it will be terminated and the test will fail.
+      If the tool is using more than "memory" bytes of ram, it will be terminated and the test will fail (default is "0" which is unlimited).
+      
+    * limit_output : int
+      
+      All output after this many bytes will be ignored (default is "10000"). Note that result data includes full tool output, so if tool produces infinite output (e.g. because of an infinite loop), all of this will be sent back which might crash the client reading this data. Therefore, output should be somehow limited.
       
   * expect : array of strings
   * fail : array of strings
