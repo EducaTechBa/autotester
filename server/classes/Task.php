@@ -2,7 +2,7 @@
 
 
 // AUTOTESTER - automated compiling, execution, debugging, testing and profiling
-// (c) Vedran Ljubovic and others 2014-2019.
+// (c) Vedran Ljubovic and others 2014-2021.
 //
 //     This program is free software: you can redistribute it and/or modify
 //     it under the terms of the GNU General Public License as published by
@@ -42,8 +42,14 @@ class Task {
 				} catch(Exception $e) {
 					continue;
 				}
-				if (empty(array_diff_assoc($taskDesc, $task->desc)))
+				
+				$taskDesc['id'] = intval($entry);
+				$taskDescJson = json_encode($taskDesc);
+				$taskJson = json_encode($task->desc);
+				if ($taskDescJson == $taskJson) {
+					$task->message = "Found existing task $entry";
 					return $task;
+				}
 			}
 		
 			do {
@@ -55,12 +61,14 @@ class Task {
 		
 		if (!file_exists($taskpath)) mkdir($taskpath);
 		
+		// We will replace the old task definition in case it changed
 		$output = json_encode($taskDesc, JSON_PRETTY_PRINT);
 		file_put_contents( $taskpath . "/description.json", $output );
 		
 		$task = new Task;
 		$task->id = $taskDesc['id'];
 		$task->desc = $taskDesc;
+		$task->message = "Created new task " . $taskDesc['id'];
 		return $task;
 	}
 	
