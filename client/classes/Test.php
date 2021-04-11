@@ -294,9 +294,11 @@ class Test {
 				$expect = trim(preg_replace("/\s+/", " ", $expect));
 				if ($output === $expect)
 					$found_expecteds = true;
+				//else
+				//	Utils::diff($output, $expect);
 			} else {
 				// Exact match
-				if ($output === $expect) 
+				if (trim($output) === trim($expect)) 
 					$found_expecteds = true;
 				//else
 				//	Utils::diff($output, $expect);
