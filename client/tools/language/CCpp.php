@@ -177,10 +177,12 @@ class CCpp extends Language {
 				$i = $end;
 			}
 			if ($string[$i] == '"') {
-				$end = strpos($string, '"', $i+1);
-				// Skip escaped quotes
-				while ($end>1 && $string[$end-1] == "\\") $end = strpos($string, '"', $end+1);
-				if ($end === false) {
+				$end = $i+1;
+				while ($end < strlen($string) && $string[$end] != '"') {
+					if ($string[$end] == "\\") $end++;
+					$end++;
+				}
+				if ($end >= strlen($string)) {
 					if ($conf_verbosity>1) $this->parser_error("unclosed string literal", "", $string, $i);
 					break;
 				}
