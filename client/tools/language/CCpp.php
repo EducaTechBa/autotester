@@ -161,15 +161,19 @@ class CCpp extends Language {
 			}
 			if ($string[$i] == "'") {
 				$start = $i;
-				do {
-					$end = strpos($string, "'", $start+1);
-					$start = $end;
-				} while ($end && $string[$end-1] == "\\");
-				if ($end === false) {
-					if ($conf_verbosity>1) $this->parser_error("unclosed char constant", "", $string, $i);
+				$end = $i+1;
+				$count = 0;
+				while ($end < strlen($string) && $string[$end] != "'") {
+					if ($string[$end] == "\\") $end++;
+					$end++;
+					$count++;
+				}
+				if ($end >= strlen($string)) {
+					if ($conf_verbosity>1) $this->parser_error("unclosed char literal", "", $string, $i);
 					break;
 				}
-				if ($end - $i > 5) $this->parser_error("too long char constant", "", $string, $i);
+				if ($count > 1) $this->parser_error("too long char literal", "", $string, $i);
+				if ($count == 0) $this->parser_error("empty char literal", "", $string, $i);
 				$i = $end;
 			}
 			if ($string[$i] == '"') {
@@ -177,7 +181,7 @@ class CCpp extends Language {
 				// Skip escaped quotes
 				while ($end>1 && $string[$end-1] == "\\") $end = strpos($string, '"', $end+1);
 				if ($end === false) {
-					if ($conf_verbosity>1) $this->parser_error("unclosed string constant", "", $string, $i);
+					if ($conf_verbosity>1) $this->parser_error("unclosed string literal", "", $string, $i);
 					break;
 				}
 				$i = $end;
