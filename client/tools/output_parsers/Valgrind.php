@@ -70,6 +70,7 @@ class Valgrind extends ExternalTool {
 			if (!preg_match("/\w/", $profiler_line)) { // Empty line means end of message
 				// Remove duplicate messages
 				$duplicate = false;
+				if ($current_message !== array())
 				foreach ($parsed_output as $msg)
 					if ($msg['file'] === $current_message['file'] && $msg['line'] === $current_message['line'] && $msg['type'] === $current_message['type'])
 						$duplicate = true;

@@ -216,7 +216,7 @@ class Task {
 			if (in_array("terminate", $test->options) && !$test->result['success'])
 				break;
 		}
-		$this->lastTest->purge();
+		if ($this->lastTest) $this->lastTest->purge();
 		$this->lastTest = null;
 	}
 

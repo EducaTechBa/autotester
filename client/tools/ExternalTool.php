@@ -36,7 +36,7 @@ class ExternalTool extends AbstractTool {
 		"timeout_method" => "timeout", // "timeout_method" => "ulimit",
 		// "nice" => "10",
 		"limit_output" => 10000,
-		"limit_memory" => 0,
+		"memory" => 0,
 		"nice" => 0
 	);
 	
@@ -60,6 +60,7 @@ class ExternalTool extends AbstractTool {
 		// Replace properties into command line
 		foreach($this->properties as $key => $value) {
 			if (!is_string($value)) continue;
+			if ($key != "path" && $key != "options") $value = escapeshellarg($value);
 			$key = "{".$key."}";
 			$cmd = str_replace($key, $value, $cmd);
 		}
@@ -175,8 +176,8 @@ class ExternalTool extends AbstractTool {
 		if ($env['timeout'] > 0 && $env['timeout_method'] == "ulimit")
 			$cmd = "ulimit -t " . $env['timeout'] . "; $cmd";
 			
-		if ($env['limit_memory'] > 0)
-			$cmd = "ulimit -v " . $env['limit_memory'] . "; $cmd";
+		if ($env['memory'] > 0)
+			$cmd = "ulimit -v " . $env['memory'] . "; $cmd";
 			
 		// Always enable coredumps
 		$cmd = "ulimit -c 1000000; $cmd";
@@ -191,6 +192,8 @@ class ExternalTool extends AbstractTool {
 		if ($env['limit_output'] > 0 && strlen($result['output']) > $env['limit_output'])
 			$result['output'] = substr($result['output'], 0, $env['limit_output']);
 		$result['output'] = Utils::clearUnicode($result['output']);
+		// Remove null characters from output
+		$result['output'] = str_replace("\0", "", $result['output']);
 		Utils::debugLog( $result['output'], 3 );
 		
 		// Did it fail to finish before $timeout ?

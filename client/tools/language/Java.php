@@ -2,7 +2,7 @@
 
 
 // AUTOTESTER - automated compiling, execution, debugging, testing and profiling
-// (c) Vedran Ljubovic and others 2014-2019.
+// (c) Vedran Ljubovic and others 2014-2021.
 //
 //     This program is free software: you can redistribute it and/or modify
 //     it under the terms of the GNU General Public License as published by
@@ -70,7 +70,7 @@ class Java extends Language {
 			if (preg_match("/^\s*package\s+(\w*?)\s?;\s+$/", $line, $matches))
 				$package = $matches[1] . ".";
 			// First class declaration in file is the main class
-			if (preg_match("/^\s*class\s+(\w*?)\W/", $line, $matches))
+			if (preg_match("/^\s*(?:public\s+?)class\s+(\w*?)\W/", $line, $matches))
 				return $package . $matches[1];
 		}
 	}

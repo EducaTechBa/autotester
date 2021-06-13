@@ -297,7 +297,7 @@ class Test {
 					$found_expecteds = true;
 			} else {
 				// Exact match
-				if ($output === $expect) 
+				if (trim($output) === trim($expect)) 
 					$found_expecteds = true;
 				//else
 				//	Utils::diff($output, $expect);
@@ -323,8 +323,8 @@ class Test {
 		}
 
 		if ($found_fails || !$found_expecteds) {
-			$this->result['status'] = $tool->result['success'] = TEST_WRONG_OUTPUT;
-			$this->result['success'] = $tool->result['status'] = false;
+			$this->result['status'] = $tool->result['status'] = TEST_WRONG_OUTPUT;
+			$this->result['success'] = $tool->result['success'] = false;
 			Utils::debugLog( "Test failed - wrong output", 1 );
 		} else {
 			Utils::debugLog( "Output ok...", 1 );
@@ -364,8 +364,11 @@ class Test {
 
 	public function purge()
 	{
-		Utils::rmMinusR($this->testPath);
-		rmdir($this->testPath);
+		global $conf_purge;
+		if ($conf_purge) {
+			Utils::rmMinusR($this->testPath);
+			rmdir($this->testPath);
+		}
 	}
 	
 	// Helper function to remove test base path from string

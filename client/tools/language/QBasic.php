@@ -2,7 +2,7 @@
 
 
 // AUTOTESTER - automated compiling, execution, debugging, testing and profiling
-// (c) Vedran Ljubovic and others 2014-2019.
+// (c) Vedran Ljubovic and others 2014-2021.
 //
 //     This program is free software: you can redistribute it and/or modify
 //     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,9 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-// CCpp.php - routines specific for C and C++ programming languages
+// QBasic.php - routines specific for QBasic programming language
+// Specifically, the original language as implemented by QBASIC.EXE and the 
+// "compatibility mode" of QB64 and FreeBasic
 
 
 class QBasic extends Language {
@@ -51,8 +53,8 @@ class QBasic extends Language {
 		$main_source_code = "\$CONSOLE:ONLY\n_DEST _CONSOLE\n$main_source_code\nSYSTEM\n";
 		// If code is calling END, replace it with SYSTEM
 		// Otherwise it will display "Press any key to continue"
-		$main_source_code = preg_replace("/(\s)END([\n\r])/", '$1SYSTEM$2', $main_source_code);		
-	
+		$main_source_code = preg_replace("/(\s)END([\n\r])/", '$1SYSTEM$2', $main_source_code);
+		
 		file_put_contents($primaryFile, $main_source_code);
 
 		return array( "success" => true, "primaryFile" => $primaryFile );
