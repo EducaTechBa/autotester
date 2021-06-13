@@ -2,7 +2,7 @@
 
 
 // AUTOTESTER - automated compiling, execution, debugging, testing and profiling
-// (c) Vedran Ljubovic and others 2014-2019.
+// (c) Vedran Ljubovic and others 2014-2021.
 //
 //     This program is free software: you can redistribute it and/or modify
 //     it under the terms of the GNU General Public License as published by
@@ -77,6 +77,7 @@ class Language {
 			copy($primaryFile, $backupFile);
 		
 		$main_source_code = file_get_contents($primaryFile);
+		$mainFileName = basename($primaryFile);
 		$parse_result = $this->parse( array() );
 		$symbols = $parse_result['symbols'];
 		
@@ -84,17 +85,31 @@ class Language {
 		$position    = $options['position'];
 		$use_markers = $options['use_markers'];
 		$try_catch   = $options['try_catch'];
-			
+		
+		// For languages that have no main function, always use top_of_file
+		if ($this->mainSymbol() == "" && ($position == "main" || $position == "above_main"))
+			$position = "top_of_file";
+		// For languages that above wouldn't work either (such as Matlab, Pascal etc.), reimplement patch function
+		
 		if ($position == "main") {
 			// Rename main
-			$newname = "_main";
-			if (empty($symbols)) {
-				// Some languages don't have a parser yet
-				while (strstr($main_source_code, $newname))
-					$newname = "_$newname";
-			} else {
-				while (array_key_exists($newname, $symbols)) 
-					$newname = "_$newname"; 
+			$newname = "main";
+			$found = true;
+			while ($found) {
+				$found = false;
+				$newname = "_$newname";
+				
+				// Look for newname in symbols
+				if (!empty($symbols)) {
+					foreach($symbols[$mainFileName] as $symbol)
+						if ($symbol['name'] == $newname)
+							$found = true;
+				} else {
+					// Some languages don't have a parser yet
+					$no_whitespace = $this->replace_comments_with_whitespace($main_source_code);
+					if (strstr($no_whitespace, $newname))
+						$found = true;
+				}
 			}
 			$main_source_code = preg_replace( $this->mainRegex(), "\${1}$newname\${2}", $main_source_code );
 			
@@ -129,22 +144,39 @@ class Language {
 		}
 		
 		else if ($position == "above_main") {
-			// We assume that test_code is a full function to be injected into code
-			if (preg_match($this->mainRegex(), $main_source_code, $matches, PREG_OFFSET_CAPTURE) && array_key_exists('code', $options)) {
-				$pos = $matches[1][1];
-				// Find beginning of line
-				while($pos > 0 && ord($main_source_code[$pos]) != 13 && ord($main_source_code[$pos]) != 10) $pos--;
-				
-				$main_source_code = substr($main_source_code, 0, $pos) . "\n" . $options['code'] . "\n" . substr($main_source_code, $pos);
-				
-				$line = substr_count($main_source_code, "\n", 0, $pos) + 1;
-				$adjust = substr_count($options['code'], "\n") + 2;
-				if (array_key_exists($line, $this->lineNumbersMap)) 
-					$this->lineNumbersMap[$line] += $adjust;
-				else
-					$this->lineNumbersMap[$line] = $adjust;
-			} else 
+			$pos = 0;
+			
+			// Use main symbol if it exists
+			foreach($symbols[$mainFileName] as $symbol)
+				if ($symbol['name'] == $this->mainSymbol() && $symbol['type'] == "function")
+					$pos = $symbol['pos'];
+					
+			if ($pos == 0) {
+				// Try main regex on code stripped from comments
+				$no_whitespace = $this->replace_comments_with_whitespace($main_source_code);
+				if (preg_match($this->mainRegex(), $no_whitespace, $matches, PREG_OFFSET_CAPTURE))
+					$pos = $matches[1][1];
+			}
+			
+			if ($pos == 0)
 				return array( "success" => false, "message" => "Couldn't find main function" );
+				
+			// Default code is nothing (meaningless)
+			$test_code = "";
+			if (array_key_exists('code', $options)) $test_code = $options['code'];
+			
+			// Find beginning of line
+			while($pos > 0 && ord($main_source_code[$pos]) != 13 && ord($main_source_code[$pos]) != 10) $pos--;
+			
+			$main_source_code = substr($main_source_code, 0, $pos) . "\n" . $options['code'] . "\n" . substr($main_source_code, $pos);
+			
+			// Recalculate line number adjustments
+			$line = substr_count($main_source_code, "\n", 0, $pos) + 1;
+			$adjust = substr_count($options['code'], "\n") + 2;
+			if (array_key_exists($line, $this->lineNumbersMap)) 
+				$this->lineNumbersMap[$line] += $adjust;
+			else
+				$this->lineNumbersMap[$line] = $adjust;
 		}
 		
 		else if ($position == "above_main_class") {
@@ -184,12 +216,51 @@ class Language {
 	
 	// Implement these functions to get default patch implementation to work
 	
-	// mainRegex - match strings before and after main function so that they can be used in preg_replace
+	// Name for "main" function in this particular language
+	// The only language that I know of where it isn't "main" is C# with "Main"
+	// If language has no main function (i.e. PHP, Perl...) return empty string
+	protected function mainSymbol() { return "main"; }
+	
+	// Regex for locating main function properly (also use this if parser is not implemented)
+	// If language has no main function (i.e. PHP, Perl...) return empty string
 	protected function mainRegex() { return "/(\s)main(\W)/"; }
 	
-	// mainClassRegex - match class declaration, used only for "above_main_class" position
-	// If language doesn't keep main function in class, return empty string
+	// Match begginning of class declaration (i.e. "class" keyword)
+	// If language doesn't keep main function in class (i.e. C++), return empty string
 	protected function mainClassRegex() { return ""; }
+	
+	// Remove all comments from code, replacing them with whitespace characters
+	// Default implementation removes C-style comments /* comment */
+	// and C++ style comments (such as this one), since they exist in a number of 
+	// programming languages and their intersections can be tricky
+	protected function replace_comments_with_whitespace($sourcecode)
+	{
+		global $conf_verbosity;
+		
+		$i=0;
+		do {
+			$c_comment = strpos($sourcecode, "/*", $i);
+			$cpp_comment = strpos($sourcecode, "//", $i);
+			if ($c_comment !== false && ($c_comment < $cpp_comment || $cpp_comment === false)) {
+				$end = strpos($sourcecode, "*/", $c_comment);
+				if ($end === false) {
+					if ($conf_verbosity>1) $this->parser_error("C-style comment doesn't end", "", $string, $i);
+					$end = strlen($sourcecode) - 2;
+				}
+				for ($i=$c_comment; $i<=$end+1; $i++)
+					$sourcecode[$i] = " ";
+			}
+			if ($cpp_comment !== false && ($cpp_comment < $c_comment || $c_comment === false)) {
+				$end = strpos($sourcecode, "\n", $cpp_comment);
+				if ($end === false) {
+					$end = strlen($sourcecode);
+				}
+				for ($i=$cpp_comment; $i<$end; $i++)
+					$sourcecode[$i] = " ";
+			}
+		} while ($c_comment !== false || $cpp_comment !== false);
+		return $sourcecode;
+	}
 	
 	// Code that invokes named function
 	protected function functionCall($name) { return "$name();"; }

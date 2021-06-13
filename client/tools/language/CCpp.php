@@ -2,7 +2,7 @@
 
 
 // AUTOTESTER - automated compiling, execution, debugging, testing and profiling
-// (c) Vedran Ljubovic and others 2014-2019.
+// (c) Vedran Ljubovic and others 2014-2021.
 //
 //     This program is free software: you can redistribute it and/or modify
 //     it under the terms of the GNU General Public License as published by
@@ -290,44 +290,13 @@ class CCpp extends Language {
 		}
 		return $pos;
 	}
-	
-	// It's simpler to remove all comments from sourcecode in advance
-	private function replace_comments_with_whitespace($sourcecode)
-	{
-		global $conf_verbosity;
-		
-		if ($conf_verbosity>2) print "replace_comments_with_whitespace\n";
-		$i=0;
-		do {
-			$c_comment = strpos($sourcecode, "/*", $i);
-			$cpp_comment = strpos($sourcecode, "//", $i);
-			if ($c_comment !== false && ($c_comment < $cpp_comment || $cpp_comment === false)) {
-				$end = strpos($sourcecode, "*/", $c_comment);
-				if ($end === false) {
-					if ($conf_verbosity>1) $this->parser_error("C-style comment doesn't end", "", $string, $i);
-					$end = strlen($sourcecode) - 2;
-				}
-				for ($i=$c_comment; $i<=$end+1; $i++)
-					$sourcecode[$i] = " ";
-			}
-			if ($cpp_comment !== false && ($cpp_comment < $c_comment || $c_comment === false)) {
-				$end = strpos($sourcecode, "\n", $cpp_comment);
-				if ($end === false) {
-					$end = strlen($sourcecode);
-				}
-				for ($i=$cpp_comment; $i<$end; $i++)
-					$sourcecode[$i] = " ";
-			}
-		} while ($c_comment !== false || $cpp_comment !== false);
-		if ($conf_verbosity>2) print "replace_comments_with_whitespace finished\n";
-		return $sourcecode;
-	}
 
 	// Find symbols in global scope to know which files need to be included
 	private function parse_c_cpp($sourcecode, $language, $file /* Only used for error messages... */) 
 	{
 		global $conf_verbosity;
 		
+		// It's simpler to remove all comments from sourcecode in advance
 		$sourcecode = $this->replace_comments_with_whitespace($sourcecode);
 
 		$symbols = array();
