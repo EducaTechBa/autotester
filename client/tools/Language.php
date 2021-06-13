@@ -51,7 +51,7 @@ class Language {
 	
 	// Default implementation of parse does nothing
 	public function parse($options) {
-		return array( "success" => true, "symbols" => [] );
+		return array( "success" => true, "symbols" => array() );
 	}
 	
 	
@@ -180,7 +180,8 @@ class Language {
 		}
 		
 		else if ($position == "above_main_class") {
-			if (!empty($this->mainClassRegex()) && preg_match($this->mainClassRegex(), $main_source_code, $matches, PREG_OFFSET_CAPTURE) && array_key_exists('code', $options)) {
+			$kk = $this->mainClassRegex();
+			if (!empty($kk) && preg_match($kk, $main_source_code, $matches, PREG_OFFSET_CAPTURE) && array_key_exists('code', $options)) {
 				$pos = $matches[1][1];
 				// Find beginning of line
 				while($pos > 0 && ord($main_source_code[$pos]) != 13 && ord($main_source_code[$pos]) != 10) $pos--;

@@ -68,6 +68,8 @@ $conf_json_pass = "";
 $conf_json_max_retries = 10;
 $conf_default_wait = 60;
 
+$conf_purge = true;
+
 // Set default environment for running tools that is appropriate for your system
 /*
 $conf_default_environment = array(
