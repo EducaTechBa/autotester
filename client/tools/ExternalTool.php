@@ -306,9 +306,9 @@ class ExternalTool extends AbstractTool {
 		
 		$run_result = array( 'status' => EXECUTION_SUCCESS );
 		
-		$cmd = "cd " . $this->test->path() . "; $cmd";
+		$cmd = "cd " . $this->test->path() . "; set -o pipefail; $cmd";
 		$output = array();
-		Utils::debugLog ( "CMD: $cmd", 2 );
+		Utils::debugLog ( "CMD (exec): $cmd", 2 );
 		
 		if ($env['output_stream'] == "stdin")
 			$output_selection = "2>/dev/null";
@@ -317,13 +317,17 @@ class ExternalTool extends AbstractTool {
 		else if ($env['output_stream'] == "both")
 			$output_selection = "2>&1";
 			
+		$output_limit = $env['limit_output'] + 10;
+		$limit_cmd = "";
+		if ($output_limit != 10) $limit_cmd = " | head -c $output_limit";
+		
 		if (array_key_exists("stdin", $env)) {
 			file_put_contents($stdin_file, $env['stdin'] . "\n");
 			$start_time = time();
-			exec( "$cmd < $stdin_file $output_selection", $output, $return );
+			exec( "$cmd < $stdin_file $output_selection $limit_cmd", $output, $return );
 		} else {
 			$start_time = time();
-			exec( "$cmd $output_selection", $output, $return );
+			exec( "$cmd $output_selection $limit_cmd", $output, $return );
 		}
 		$run_result['duration'] = time() - $start_time;
 		$run_result['output'] = join("\n", $output);
