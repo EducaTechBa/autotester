@@ -219,6 +219,7 @@ class ExternalTool extends AbstractTool {
 	private function executeCommandPopen($cmd, $env)
 	{
 		global $conf_max_program_output;
+		$cmd = "export PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin; $cmd";
 
 		$stderr_file   = $this->test->path() . "/buildservice_stderr.txt";
 		$descriptorspec = array(
