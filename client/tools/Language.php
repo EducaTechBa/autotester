@@ -93,7 +93,7 @@ class Language {
 		
 		if ($position == "main") {
 			// Rename main
-			$newname = "main";
+			$newname = $this->mainSymbol();
 			$found = true;
 			while ($found) {
 				$found = false;
