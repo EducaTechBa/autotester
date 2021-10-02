@@ -27,7 +27,7 @@ class Gcc extends ExternalTool {
 		if (!array_key_exists('output', $this->result)) return; 
 		
 		// Parse gcc output
-		$ignored_messages = array( "this will be reported", "ISO C90 forbids mixed declarations and code", "C++ style comments are not allowed" );
+		$ignored_messages = array( "this will be reported", "ISO C90 forbids mixed declarations and code", "C++ style comments are not allowed", "Each undeclared identifier is reported only once", "for each function it appears in" );
 		
 		$compiler_output = explode("\n", $this->result['output']);
 		$current_message = array();
