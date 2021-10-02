@@ -346,6 +346,10 @@ Some tools are "internal" i.e. implemented within buildservice using php code. F
          * replace_substrings : object
             
            Make a string replace in all source files, replacing object keys in the array with their values.
+              
+         * starter_code : string
+            
+           Allows to specify certain starter code that isn't allowed to be modified. All whitespace is removed before comparison. Place the string "===USER_CODE===" anywhere inside this starter code where users can input their own code.
 
   * patch
 

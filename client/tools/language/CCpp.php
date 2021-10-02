@@ -51,12 +51,42 @@ class CCpp extends Language {
 	
 	protected function mainFunction($code) { return "int main() {\n$code\nreturn 0;\n}\n"; }
 	
+	// Helper function to remove starter code from user-submitted code
+	private function removeStarterCode($content, $starter_code) {
+		$coreContent = "";
+		$content = preg_replace("/\s/", "", $content);
+		$starter_code = preg_replace("/\s/", "", $starter_code);
+		$oldPos = -1;
+		foreach(explode("===USER_CODE===", $starter_code) as $part) {
+			$pos = strpos($content, $part);
+			if ($oldPos == -1 && $pos != 0)
+				// First chunk isn't at beginning
+				return false;
+			if ($pos === false)
+				return false;
+			$coreContent .= substr($content, $oldPos, $pos-$oldPos);
+			$oldPos = $pos + strlen($part);
+		}
+		if ($oldPos != strlen($content))
+			// Last chunk isn't at end
+			return false;
+		return $coreContent;
+	}
+	
 	// Parse for C and C++
 	public function parse($options) {
 		$found_subst = $all_symbols = [];
 		foreach($this->test->sourceFiles as $file) {
 			// Parse file
-			$content = file_get_contents($file);
+			$content = $coreContent = file_get_contents($file);
+			
+			// Starter code
+			if (array_key_exists("starter_code", $options)) {
+				$coreContent = $this->removeStarterCode($content, $options['starter_code']);
+				if ($coreContent === false)
+					return array( "success" => false, "message" => "Starter code is modified" );
+			}
+			
 			$this->symbols[$file] = $this->parse_c_cpp( $content, $this->language, basename($file) );
 			// Shortcut array
 			foreach($this->symbols[$file] as $data)
@@ -65,12 +95,12 @@ class CCpp extends Language {
 			// String level operations
 			if (array_key_exists("require_substrings", $options))
 				foreach($options['require_substrings'] as $substring)
-					if (strstr($content, $substring))
+					if (strstr($coreContent, $substring))
 						$found_subst[$substring] = true;
 			
 			if (array_key_exists("ban_substrings", $options))
 				foreach($options['ban_substrings'] as $substring)
-					if (strstr($content, $substring))
+					if (strstr($coreContent, $substring))
 						return array( "success" => false, "message" => "Found forbidden substring $substring" );
 			
 			if (array_key_exists("replace_substrings", $options)) {
