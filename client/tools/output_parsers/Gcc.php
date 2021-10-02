@@ -27,8 +27,10 @@ class Gcc extends ExternalTool {
 		if (!array_key_exists('output', $this->result)) return; 
 		
 		// Parse gcc output
+		$ignored_messages = [ "this will be reported", "ISO C90 forbids mixed declarations and code", "C++ style comments are not allowed", "Each undeclared identifier is reported only once", "for each function it appears in" ];
+		
 		$compiler_output = explode("\n", $this->result['output']);
-		$current_message = array();
+		$current_message = [];
 		$state = "";
 		$this->result['parsed_output'] = [];
 
@@ -44,8 +46,15 @@ class Gcc extends ExternalTool {
 				// Do nothing
 			}
 			else if (preg_match("/^([^\:\s]*?):(\d+):(\d+): error: (.*?)$/", $line, $matches)
+				|| preg_match("/^([^\:\s]*?):(\d+): error: (.*?)$/", $line, $matches)
 				|| preg_match("/^([^\:\s]*?):(\d+):(\d+): fatal error: (.*?)$/", $line, $matches)) {
-				if (strstr($matches[4], "this will be reported")) continue;
+				if (count($matches) == 5) $message = $matches[4]; else $message = $matches[3];
+
+				$ignore = false;
+				foreach($ignored_messages as $msg)
+					if (strstr($message, $msg)) $ignore = true;
+				if ($ignore) continue;
+				
 				if (!empty($current_message)) $this->result['parsed_output'][] = $current_message;
 				$current_message = array();
 				
@@ -54,13 +63,20 @@ class Gcc extends ExternalTool {
 				$current_message['type'] = "error";
 				$current_message['file'] = $this->test->removeBasePath( $matches[1] );
 				$current_message['line'] = $matches[2];
-				$current_message['col'] = $matches[3];
-				$current_message['message'] = $this->gcc_cleanup($matches[4]);
+				if (count($matches) == 5)
+					$current_message['col'] = $matches[3];
+				$current_message['message'] = $this->gcc_cleanup($message);
 				//$current_message['output'] = $line;
 			}
 			else if (preg_match("/^([^\:\s]*?):(\d+):(\d+): warning: (.*?)$/", $line, $matches) 
 				|| preg_match("/^([^\:\s]*?):(\d+): warning: (.*?)$/", $line, $matches)) {
-				if (count($matches) == 5 && strstr($matches[4], "this will be reported")) continue;
+				if (count($matches) == 5) $message = $matches[4]; else $message = $matches[3];
+				
+				$ignore = false;
+				foreach($ignored_messages as $msg)
+					if (strstr($message, $msg)) $ignore = true;
+				if ($ignore) continue;
+				
 				if (!empty($current_message)) $this->result['parsed_output'][] = $current_message;
 				$current_message = array();
 				
@@ -69,15 +85,17 @@ class Gcc extends ExternalTool {
 				$current_message['type'] = "warning";
 				$current_message['file'] = $this->test->removeBasePath( $matches[1] );
 				$current_message['line'] = $matches[2];
-				if (count($matches) == 5) {
+				if (count($matches) == 5)
 					$current_message['col'] = $matches[3];
-					$current_message['message'] = $this->gcc_cleanup($matches[4]);
-				} else {
-					$current_message['message'] = $this->gcc_cleanup($matches[3]);
-				}
+				$current_message['message'] = $this->gcc_cleanup($message);
 				//$current_message['output'] = $line;
 			} 
 			else if (preg_match("/^([^\:\s]*?):(\d+):(\d+): note: (.*?)$/", $line, $matches)) {
+				$ignore = false;
+				foreach($ignored_messages as $msg)
+					if (strstr($message, $msg)) $ignore = true;
+				if ($ignore) continue;
+				
 				if (!empty($current_message)) $this->result['parsed_output'][] = $current_message;
 				$current_message = array();
 				
