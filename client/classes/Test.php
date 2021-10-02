@@ -231,7 +231,6 @@ class Test {
 					if (array_key_exists("expect_exception", $tool->properties)) {
 						$exp_exc = $tool->properties['expect_exception'];
 						$recv_exc = substr($output, $except + strlen($markers[2]));
-						print "Recv $recv_exc\n";
 						if (!$exp_exc || $exp_exc == $recv_exc) {
 							Utils::debugLog( "Exception '$exp_exc' ok...", 1 );
 						} else {
@@ -283,8 +282,8 @@ class Test {
 				if (preg_match("/$expect/", $output))
 					$found_expecteds = true;
 			} else if ($matching == "substring") {
-                                $output = trim(preg_replace("/\s+/", " ", $output));
-                                $expect = trim(preg_replace("/\s+/", " ", $expect));
+				$output = trim(preg_replace("/\s+/", " ", $output));
+				$expect = trim(preg_replace("/\s+/", " ", $expect));
 				if (strstr($output, $expect))
 					$found_expecteds = true;
 			} else if ($matching == "whitespace") {

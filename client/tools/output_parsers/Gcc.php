@@ -104,7 +104,11 @@ class Gcc extends ExternalTool {
 			else {
 				if (!empty($current_message)) {
 					//$current_message['output'] .= $line;
-					if (empty($current_message['code'])) $current_message['code'] = trim($line);
+					if (empty($current_message['code'])) {
+						$line = trim($line);
+						$line = preg_replace("/^\d+ \|\s+/", "", $line);
+						$current_message['code'] = trim($line);
+					}
 				}
 			}
 		}

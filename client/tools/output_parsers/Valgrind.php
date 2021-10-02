@@ -71,9 +71,9 @@ class Valgrind extends ExternalTool {
 				// Remove duplicate messages
 				$duplicate = false;
 				if ($current_message !== array())
-				foreach ($parsed_output as $msg)
-					if ($msg['file'] === $current_message['file'] && $msg['line'] === $current_message['line'] && $msg['type'] === $current_message['type'])
-						$duplicate = true;
+					foreach ($parsed_output as $msg)
+						if ($msg['file'] === $current_message['file'] && $msg['line'] === $current_message['line'] && $msg['type'] === $current_message['type'])
+							$duplicate = true;
 
 				if (!$duplicate)
 					array_push($parsed_output, $current_message);

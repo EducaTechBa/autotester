@@ -155,6 +155,7 @@ class Utils {
 				}
 				else if ($da < $db || $db != 0) {
 					print "a [$pa-" . ($pa+$da) . "]: '" . substr($a, $pa, $da) . "'\n";
+					print "context: " . substr($a, $pa-20, $da+20) . "\n";
 					$pa += $da;
 				} else {
 					print "b [$pb-" . ($pb+$db) . "]: '" . substr($b, $pb, $db) . "'\n";

@@ -35,15 +35,51 @@ abstract class AbstractTool {
 		// Test if tool exists on the system
 		return true;
 	}
-	
+
 	abstract public function run();
 
+	// Detect tool version
 	public function getVersion() {
 		if (!array_key_exists('version_line', $this->properties)) return false;
 		if (isset($this->version)) return $this->version;
 		$cmd = str_replace("{path}", $this->properties['path'], $this->properties['version_line']);
-		$this->version = trim(strstr(`$cmd 2>&1`, "\n", true));
+		$this->version = trim(strstr(`$cmd`, "\n", true));
+		
+		// After exploding by "." we merge some zeros to the end to avoid warnings
+		list($this->majorVersion, $this->minorVersion, $this->pointRelease) = array_merge(explode(".", $this->version), array(0,0));
 		return $this->version;
+	}
+	
+	// Test if tool version matches received version specification
+	public function testVersion($version) {
+		// If getVersion is false, this means that we can't detect version of this tool
+		// We will assume it's ok
+		if (!$this->getVersion()) return true;
+		
+		// If $version doesn't specify minor or release, we assume that any is good (-1)
+		list($major, $minor, $release) = array_merge(explode(".", $version), array(-1, -1));
+		$major = intval($major); $minor = intval($minor); $release = intval($release); 
+		
+		// Suffix + means that we are looking for version greater or equal the specified
+		if (Utils::endsWith($version, "+")) {
+			if ($this->majorVersion > $major) return true;
+			if ($this->majorVersion == $major && ($this->minorVersion > $minor || $minor == -1)) return true;
+			if ($this->majorVersion == $major && $this->minorVersion == $minor && ($this->pointRelease >= $release || $release == -1)) return true;
+			return false;
+		}
+		// Suffix - means we are looking for version lesser or equal the specified
+		else if (Utils::endsWith($version, "-")) {
+			if ($this->majorVersion < $major) return true;
+			if ($this->majorVersion == $major && ($this->minorVersion < $minor || $minor == -1)) return true;
+			if ($this->majorVersion == $major && $this->minorVersion == $minor && ($this->pointRelease <= $release || $release == -1)) return true;
+			return false;
+		}
+		// No suffix means that we are looking for exact version
+		else {
+			if ($this->majorVersion == $major && ($this->minorVersion == $minor || $minor == -1) && ($this->pointRelease == $release || $release == -1))
+				return true;
+		}
+		return false;
 	}
 
 
