@@ -445,7 +445,8 @@ class CCpp extends Language {
 				continue;
 			}
 			
-			if (empty(trim($ident_name)) && $conf_verbosity>1) self::parser_error("Empty ident", "main.c", $sourcecode, $i);
+			$ident_name = trim($ident_name);
+			if (empty($ident_name) && $conf_verbosity>1) self::parser_error("Empty ident", "main.c", $sourcecode, $i);
 			
 			// Loops
 			if ($ident_name == "for" || $ident_name == "while" || $ident_name == "do") {
