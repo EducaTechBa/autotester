@@ -203,9 +203,6 @@ class CCpp extends Language {
 	// ================================================
 	
 	// Helper functions for parser
-	
-	// This is currently only used to find which file contains main()
-	// but in the future other tests may be implemented that don't require a compiler
 
 	// Finds matching closed brace for open brace at $pos
 	// In case there is no matching brace, function will return strlen($string)
@@ -373,6 +370,10 @@ class CCpp extends Language {
 		global $conf_verbosity;
 		
 		$end = self::find_matching($sourcecode, $start);
+		if ($end === strlen($sourcecode)) {
+			if ($conf_verbosity>2) self::parser_error("Function $parent never closed", "main.c", $sourcecode, $start);
+			return array();
+		}
 		
 		$cpp_types = array( "int", "short", "char", "long", "long long", "float", "double", "bool", "unsigned", "signed" );
 		$symbols = array();
@@ -445,7 +446,8 @@ class CCpp extends Language {
 				continue;
 			}
 			
-			if (empty(trim($ident_name)) && $conf_verbosity>1) self::parser_error("Empty ident", "main.c", $sourcecode, $i);
+			$ident_name = trim($ident_name);
+			if (empty($ident_name) && $conf_verbosity>1) self::parser_error("Empty ident", "main.c", $sourcecode, $i);
 			
 			// Loops
 			if ($ident_name == "for" || $ident_name == "while" || $ident_name == "do") {
@@ -738,6 +740,7 @@ class CCpp extends Language {
 					$open_brace_pos = strpos($sourcecode, "(", $i);
 					
 					if ($open_brace_pos && $open_brace_pos < $sc_pos && $open_brace_pos < $curly_pos) {
+						$i = self::find_matching($sourcecode, $open_brace_pos);
 						if ($sc_pos !== false && $sc_pos < $curly_pos) 
 							$symbol['type'] = "function prototype"; 
 						else {
