@@ -370,6 +370,7 @@ class CCpp extends Language {
 		global $conf_verbosity;
 		
 		$end = self::find_matching($sourcecode, $start);
+		
 		if ($end === strlen($sourcecode)) {
 			if ($conf_verbosity>2) self::parser_error("Function $parent never closed", "main.c", $sourcecode, $start);
 			return array();
@@ -470,12 +471,21 @@ class CCpp extends Language {
 				
 			if ($ident_name == "for" || $ident_name == "while" || $ident_name == "switch" || $ident_name == "if" || $ident_name == "catch") {
 				$i = strpos($sourcecode, "(", $i);
+				if ($i == false) {
+					self::parser_error("No ( after $ident_name", "main.c", $sourcecode, $i);
+					break;
+				}
 				$i = self::find_matching($sourcecode, $i);
 			}
 			else if ($ident_name == "do-while" || $ident_name == "try")
 				$i += strlen($ident_name);
-			else
+			else {
 				$i = strpos($sourcecode, ";", $i);
+				if ($i == false) {
+					self::parser_error("No semicolon after $ident_name", "main.c", $sourcecode, $i);
+					break;
+				}
+			}
 		}
 		
 		return $symbols;
