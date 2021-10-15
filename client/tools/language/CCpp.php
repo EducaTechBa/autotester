@@ -373,6 +373,10 @@ class CCpp extends Language {
 		global $conf_verbosity;
 		
 		$end = self::find_matching($sourcecode, $start);
+		if ($end === strlen($sourcecode)) {
+			if ($conf_verbosity>2) self::parser_error("Function $parent never closed", "main.c", $sourcecode, $start);
+			return array();
+		}
 		
 		$cpp_types = array( "int", "short", "char", "long", "long long", "float", "double", "bool", "unsigned", "signed" );
 		$symbols = array();
