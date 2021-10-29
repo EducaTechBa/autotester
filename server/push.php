@@ -216,6 +216,8 @@ function ws_parse_arguments() {
 				$progDesc['language'] = $task->desc['language'];
 			else if (array_key_exists("languages", $task->desc) && is_array($task->desc['languages']))
 				$progDesc['language'] = $task->desc['languages'][0];
+			else
+				return array( "success" => false, "code" => "ERR008", "message" => "Language not specified" );
 		}
 		
 		// No failure modes
