@@ -129,6 +129,18 @@ class Queue {
 		$this->writeQueue();
 	}
 	
+	// Remove program from queue
+	public function remove($programId) {
+		// Don't add again if already queued for testing
+		foreach($this->queue as $key => $item)
+			if ($item['program'] == $programId)
+				unset($this->queue[$key]);
+		foreach($this->assigned as $key => $item)
+			if ($item['program'] == $programId)
+				unset($this->assigned[$key]);
+		$this->writeQueue();
+	}
+	
 	// Return task id for next unfinished program
 	public function nextTask($client) {
 		$client->updateLastTime();
@@ -248,11 +260,13 @@ class Queue {
 		
 		// If program is returned to waiting queue, stop testing
 		if ($result['status'] == PROGRAM_CURRENTLY_TESTING) {
-			foreach($this->queue as $key => $item) {
+			$found = false;
+			foreach($this->assigned as $key => $item) {
 				if ($item['program'] == $program->id) {
-					return false;
+					$found = true;
 				}
 			}
+			if (!$found) return false;
 		}
 		
 		// Call Program::setResult to write the file etc.
@@ -359,7 +373,7 @@ class Queue {
 					$removed++;
 				}
 			} catch(Exception $e) {
-				// Progrem doesn't actually exist
+				// Program doesn't actually exist
 				unset($queue[$key]);
 				$removed++;
 			}

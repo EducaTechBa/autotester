@@ -120,6 +120,14 @@ Beneath each action is its description, request type, parameters and return valu
   * task : string
   
     Task id.
+   
+* cancelProgram (GET)
+
+  Remove program from queue and stop testing if already started.
+  
+  * program : string
+  
+    Program id.
   
 
 The following actions are intended to be used by the pull.php client:

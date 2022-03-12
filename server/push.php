@@ -333,6 +333,22 @@ function ws_parse_arguments() {
 		return array( "success" => true );
 	}
 	
+	if ($action == "cancelProgram") {
+		try {
+			$program = Program::fromId( $_REQUEST['id'] );
+		} catch(Exception $e) {
+			try {
+				$program = Program::fromId( $_REQUEST['program'] );
+			} catch(Exception $e) {
+				return array( "success" => false, "code" => "ERR005", "message" => "Unknown program" );
+			}
+		}
+		
+		$queue = new Queue;
+		$queue->remove( $program->id );
+		return array( "success" => true );
+	}
+	
 	
 	// Client services
 	
