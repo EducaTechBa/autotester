@@ -82,6 +82,12 @@ class CCpp extends Language {
 	
 	// Helper function to remove starter code from user-submitted code
 	private function findStarterCode($content, $starter_code) {
+		// Remove comments and irrelevant code before checking
+		$content = preg_replace("/\#(.*?)\n/", "", $content);
+		$content = preg_replace("/\/\*(.*?)\*\//s", "", $content);
+		$starter_code = preg_replace("/\#(.*?)\n/", "", $starter_code);
+		$starter_code = preg_replace("/\/\*(.*?)\*\//s", "", $starter_code);
+		
 		$blocks = array();
 		$oldPos = $end = -1;
 		foreach(explode("===USER_CODE===", $starter_code) as $part) {
