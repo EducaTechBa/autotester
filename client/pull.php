@@ -65,7 +65,7 @@ if ($taskid != 0)
 else {
 	// Process tasks with pending programs until none are left
 	do {
-		$mode = json_query("ping", $clientData);
+		$mode = ping_query($clientData);
 		Utils::debugLog( "ping - $mode" , 2 );
 		if (!$hibernate && ($mode == "hibernate" || $mode === false)) {
 			Utils::debugLog("Hibernate...", 1);
@@ -191,6 +191,45 @@ function process_program($task, $program_id) {
 	
 	unlink($program['zip']);
 } // End process_program
+
+
+// Custom version of json_query to handle errors
+function ping_query($parameters, $recurse = true) 
+{
+	global $conf_push_url, $session_id, $conf_verbosity;
+
+	$parameters['action'] = "ping";
+
+	if ($session_id !== "")
+		$parameters[session_name()] = $session_id;
+	$result = json_request_retry($conf_push_url, $parameters, "GET");
+
+	if (!is_array($result) || !array_key_exists("success", $result)) {
+		print "JSON ping failed: unknown reason\n";
+		if ($conf_verbosity>0) print_r($result);
+		return false;
+	} else if ($result["success"] !== "true" && $result["success"] !== true) {
+		if ($result['code'] == "ERR007" && $recurse) {
+			print "Unknown client id " . $parameters['client'] . " - reregistering...\n";
+			
+			// Reregister client
+			global $buildhost_id, $hibernate, $clientData;
+			$data = array( "name" => $buildhost_id, "os" => Utils::getOsVersion(), "hibernate" => $hibernate );
+			$clientId = json_query("registerClient", array("client" => json_encode($data)) );
+			if ($clientId === false) {
+				Utils::debugLog( "Failed to connect to server." , 0 );
+				return false;
+			}
+			$clientData = array( "client" => $clientId, "mode" => "awake" ); // Shortcut
+			return ping_query($clientData, false);
+		}
+		print "JSON ping failed: ". $result['code']. " : ". $result['message'] . "\n"; 
+		return FALSE;
+	}
+	if (array_key_exists('data', $result))
+		return $result["data"];
+	return true;
+}
 
 
 
