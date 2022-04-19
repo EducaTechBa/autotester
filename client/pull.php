@@ -213,7 +213,7 @@ function ping_query($parameters, $recurse = true)
 			print "Unknown client id " . $parameters['client'] . " - reregistering...\n";
 			
 			// Reregister client
-			global $buildhost_id, $hibernate, $clientData;
+			global $buildhost_id, $hibernate, $clientData, $clientId;
 			$data = array( "name" => $buildhost_id, "os" => Utils::getOsVersion(), "hibernate" => $hibernate );
 			$clientId = json_query("registerClient", array("client" => json_encode($data)) );
 			if ($clientId === false) {
