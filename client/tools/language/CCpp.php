@@ -56,7 +56,16 @@ class CCpp extends Language {
 		return ($char == " " || $char == "\n" || $char == "\t");
 	}
 	private static function strpos_ws($haystack, $needle, &$end) {
+		if (strlen($haystack) == 0) return false;
+		
 		$needle = trim($needle);
+		// Is needle just whitespace?
+		if (strlen($needle) == 0) { 
+			$end = 0;
+			while (self::ws($haystack[$end])) $end++;
+			return 0; 
+		}
+		
 		for ($i=0; $i<strlen($haystack); $i++) {
 			if ($haystack[$i] == $needle[0]) {
 				$pos_n = $pos_h = 0;
@@ -83,16 +92,16 @@ class CCpp extends Language {
 	// Helper function to remove starter code from user-submitted code
 	private function findStarterCode($content, $starter_code) {
 		// Remove comments and irrelevant code before checking
-		$content = preg_replace("/\#(.*?)\n/", "", $content);
-		$content = preg_replace("/\/\*(.*?)\*\//s", "", $content);
-		$starter_code = preg_replace("/\#(.*?)\n/", "", $starter_code);
-		$starter_code = preg_replace("/\/\*(.*?)\*\//s", "", $starter_code);
+		$content = preg_replace("/\#.*?\n/", "", $content);
+		$content = preg_replace("/\/\*.*?\*\//s", "", $content);
+		$starter_code = preg_replace("/\#.*?\n/", "", $starter_code);
+		$starter_code = preg_replace("/\/\*.*?\*\//s", "", $starter_code);
 		
 		$blocks = array();
 		$oldPos = $end = -1;
 		foreach(explode("===USER_CODE===", $starter_code) as $part) {
 			$pos = self::strpos_ws($content, $part, $end);
-			if ($oldPos == -1 && $pos != 0)
+			if ($oldPos == -1 && $pos != 0) 
 				// First chunk isn't at beginning
 				return false;
 			if ($pos === false)
