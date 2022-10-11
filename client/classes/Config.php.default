@@ -98,7 +98,8 @@ $conf_tools = array(
 				"optimize" => "-O1",
 				"debug" => "-g",
 				"warn" => "-Wall -Wuninitialized -Winit-self -Wfloat-equal -Wno-sign-compare -Wno-unused-result",
-				"pedantic" => "-Werror=implicit-function-declaration -Werror=vla -pedantic"
+				"pedantic" => "-Werror=implicit-function-declaration -Werror=vla -pedantic",
+				"error" => "-Wreturn-type -Werror"
 			)
 		),
 
@@ -112,6 +113,8 @@ $conf_tools = array(
 			"options" => "-lm -pass-exit-codes", // CLI switches that will always be passed regardless
 			"features" => array(
 				"c++11" => "-std=c++11",
+				"c++14" => "-std=c++14",
+				"c++17" => "-std=c++17",
 				"optimize" => "-O1",
 				"debug" => "-ggdb",
 				"warn" => "-Wall -Wuninitialized -Winit-self -Wfloat-equal -Wno-sign-compare",

@@ -183,7 +183,7 @@ class ExternalTool extends AbstractTool {
 		
 		// Execute appropriate type of plugin
 		if ($env['type'] == "exec")
-			$result = $this->executeCommandExec($cmd, $env);
+			$result = $this->executeCommandExecBash($cmd, $env);
 		else if ($env['type'] == "popen")
 			$result = $this->executeCommandPopen($cmd, $env);
 		
@@ -297,6 +297,52 @@ class ExternalTool extends AbstractTool {
 		return $run_result;
 	}
 
+
+	// Run command using PHP exec mechanism
+	function executeCommandExecBash($cmd, $env)
+	{
+		$stdin_file    = $this->test->path() . "/buildservice_stdin.txt";
+		$stdout_file   = $this->test->path() . "/buildservice_stdout.txt";
+		$scriptPath    = $this->test->path() . "/runtest.sh";
+		
+		$run_result = array( 'status' => EXECUTION_SUCCESS );
+		
+		Utils::debugLog ( "CMD (bash): $cmd", 2 );
+		
+		$output = array();
+		
+		if ($env['output_stream'] == "stdin")
+			$output_selection = "2>/dev/null";
+		else if ($env['output_stream'] == "stderr")
+			$output_selection = "1>/dev/null 2>&1";
+		else if ($env['output_stream'] == "both")
+			$output_selection = "2>&1";
+			
+		$output_limit = $env['limit_output'] + 10;
+		$limit_cmd = "";
+		if ($output_limit != 10) $limit_cmd = " | head -c $output_limit";
+		
+		$bashCode = "#!/bin/bash\n\ncd " . $this->test->path() . "\nset -o pipefail\n";
+		
+		if (array_key_exists("stdin", $env)) {
+			file_put_contents($stdin_file, $env['stdin'] . "\n");
+			$bashCode .= "$cmd < $stdin_file $output_selection $limit_cmd &";
+		} else {
+			$bashCode .= "$cmd $output_selection $limit_cmd &";
+		}
+		$bashCode .= "\necho $! > pid.txt\nfg";
+		
+		file_put_contents($scriptPath, $bashCode);
+		chmod($scriptPath, 0755);
+		$start_time = time();
+		exec( "$scriptPath", $output, $return );
+		
+		$run_result['duration'] = time() - $start_time;
+		$run_result['output'] = join("\n", $output);
+		$run_result['exit_code'] = $return;
+
+		return $run_result;
+	}
 
 	// Run command using PHP exec mechanism
 	function executeCommandExec($cmd, $env)
