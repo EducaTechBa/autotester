@@ -43,6 +43,17 @@ while_not_ok($conf_tmp_path, "Please enter path for temporary files: ", function
 	return false;
 });
 
+print "Looking for mbstring... ";
+$found = false;
+foreach(get_loaded_extensions() as $extension)
+	if ($extension == "mbstring") $found = true;
+if ($found)
+	print "ok.\n";
+else {
+	print "not found.\nAutotester requires php-mbstring extension to be installed.\n";
+	exit(1);
+}
+
 print "Looking for unzip... ";
 while_not_ok($conf_unzip_command, "Enter name/path for unzip command: ", function($k) {
 	if (program_exists($k)) return true;

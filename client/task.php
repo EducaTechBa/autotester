@@ -28,14 +28,22 @@ require("plugins.php"); // fix pluginses into plugins as soon as old config obso
 require("status_codes.php");
 
 
+
 // CLI version
 if (php_sapi_name() == "cli") {
 	echo "AUTOTESTER task.php\nCopyright (c) 2014-2019 Vedran Ljubović\nElektrotehnički fakultet Sarajevo\nLicensed under GNU GPL v3\n\n";
+
+	exec("command -v zip", $output, $exitCode);
+	if ($exitCode != 0) {
+		print "Error: task.php requires 'zip' command to be present\n";
+		exit(1);
+	}
+
 	if ($argc != 3 && $argc != 4 && $argc != 5) {
 		print "Usage:	php task.php task_specification.json program.zip [task_result.json] [LANGUAGE]\n";
 		exit(1);
 	}
-	
+
 	$taskDesc = json_decode(file_get_contents($argv[1]), true);
 	if ($taskDesc===NULL) {
 		print "Failed to decode task specification as JSON\n";
