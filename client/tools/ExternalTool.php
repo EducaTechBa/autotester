@@ -322,7 +322,7 @@ class ExternalTool extends AbstractTool {
 		$limit_cmd = "";
 		if ($output_limit != 10) $limit_cmd = " | head -c $output_limit";
 		
-		$bashCode = "#!/bin/bash\n\ncd " . $this->test->path() . "\nset -o pipefail\n";
+		$bashCode = "#!/bin/bash\n\ncd " . $this->test->path() . "\nset -o pipefail\nset -m\n";
 		
 		if (array_key_exists("stdin", $env)) {
 			file_put_contents($stdin_file, $env['stdin'] . "\n");
