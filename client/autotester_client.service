@@ -1,0 +1,13 @@
+[Unit]
+Description=Autotester Client
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=$WORKDIR
+ExecStart=php pull.php wait > /var/log/autotester.log
+
+[Install]
+WantedBy=multi-user.target

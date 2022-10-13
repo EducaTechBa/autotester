@@ -156,6 +156,15 @@ If you install these tools later, you can re-run install.php to add them to conf
 $configuration_output .= ");\n\n\$conf_extensions = " . var_export($conf_extensions, true) . ";\n\n";
 file_put_contents("classes/Config.php", $configuration_output);
 
+if (yesno("Create systemd service?")) {
+	$unit_file = file_get_contents("autotester_client.service");
+	$unit_file = str_replace("\$WORKDIR", getcwd(), $unit_file);
+	file_put_contents("/etc/systemd/system/autotester_client.service", $unit_file);
+	if (yesno("Run at system startup?"))
+		`systemctl enable autotester_client`;
+}
+
+
 print "\n\nDone. Autotester client is now ready.\n";
 
 
