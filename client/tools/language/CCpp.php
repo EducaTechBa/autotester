@@ -123,6 +123,33 @@ class CCpp extends Language {
 		return false;
 	}
 	
+	// patch function for position "below_includes"
+	public function patchBelowIncludes($code, $options) {
+		if (array_key_exists('code', $options)) {
+			$i = 0;
+			$line = 0;
+			while (true) {
+				if (self::ws($code[$i])) {
+					if ($code[$i] == "\n") $line++;
+					$i++;
+				}
+				else if (substr($code, $i, 8) == "#include")
+					$i = strpos($code, "\n", $i);
+				else
+					break;
+			}
+			
+			$code = substr($code, 0, $i) . "\n" . $options['code'] . "\n" . substr($code, $i+1);
+			
+			$adjust = substr_count($options['code'], "\n") + 1;
+			if (array_key_exists($line, $this->lineNumbersMap)) 
+				$this->lineNumbersMap[$line] += $adjust;
+			else
+				$this->lineNumbersMap[$line] = $adjust;
+		}
+		return $code;
+	}
+	
 	// Parse for C and C++
 	public function parse($options) {
 		$found_subst = $all_symbols = [];

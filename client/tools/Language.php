@@ -91,6 +91,14 @@ class Language {
 			$position = "top_of_file";
 		// For languages that above wouldn't work either (such as Matlab, Pascal etc.), reimplement patch function
 		
+		if ($position == "below_includes") {
+			// This is a C/C++ specific patch position
+			if ($this->language == "c" || $this->language == "c++")
+				$main_source_code = $this->patchBelowIncludes($main_source_code, $options);
+			else
+				$position = "top_of_file";
+		}
+		
 		if ($position == "main") {
 			// Rename main
 			$newname = $this->mainSymbol();
