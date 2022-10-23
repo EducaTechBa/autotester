@@ -139,7 +139,7 @@ class CCpp extends Language {
 					break;
 			}
 			
-			$code = substr($code, 0, $i) . "\n" . $options['code'] . "\n" . substr($code, $i+1);
+			$code = substr($code, 0, $i) . "\n" . $options['code'] . "\n" . substr($code, $i);
 			
 			$adjust = substr_count($options['code'], "\n") + 1;
 			if (array_key_exists($line, $this->lineNumbersMap)) 

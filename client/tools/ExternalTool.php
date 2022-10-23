@@ -330,7 +330,7 @@ class ExternalTool extends AbstractTool {
 		} else {
 			$bashCode .= "$cmd $output_selection $limit_cmd &";
 		}
-		$bashCode .= "\necho $! > pid.txt\nwait";
+		$bashCode .= "\nPID=$!\necho \$PID > pid.txt\nwait \$PID";
 		
 		file_put_contents($scriptPath, $bashCode);
 		chmod($scriptPath, 0755);
