@@ -172,7 +172,9 @@ function ws_parse_arguments() {
 	"setProgramStatus", "setCompileResult", "setExecuteResult", "setDebugResult", "setProfileResult", "setTestResult", "getFile");
 	$push_actions = array();
 	
-	$action = $_REQUEST['action'];
+	$action = "";
+	if (isset($_REQUEST['action']))
+		$action = $_REQUEST['action'];
 	
 	// Authenticate
 	if (in_array($action, $pull_actions) && !authenticate($conf_allow_pull))

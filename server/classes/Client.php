@@ -79,6 +79,8 @@ class Client {
 	
 	// Return timestamp of last contact with this client
 	public function getLastTime() {
+		if (!file_exists($this->path . "/last_time.txt"))
+			return 0;
 		return intval(file_get_contents( $this->path . "/last_time.txt" ));
 	}
 	
@@ -127,7 +129,8 @@ class Client {
 	// Remove all client data
 	public function unregister() {
 		unlink( $this->path . "/last_time.txt" );
-		unlink( $this->path . "/requested_mode" );
+		if (file_exists($this->path . "/requested_mode"))
+			unlink( $this->path . "/requested_mode" );
 		unlink( $this->path . "/description.json" );
 		rmdir( $this->path );
 	}
