@@ -7,7 +7,12 @@ StartLimitIntervalSec=0
 Type=simple
 User=root
 WorkingDirectory=$WORKDIR
-ExecStart=php pull.php wait > /var/log/autotester.log
+ExecStart=php pull.php wait
+StandardOutput=file:/var/log/autotester.log
+
+Restart=on-failure
+RestartSec=5s
+
 
 [Install]
 WantedBy=multi-user.target
