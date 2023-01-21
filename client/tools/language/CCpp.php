@@ -459,6 +459,7 @@ class CCpp extends Language {
 					$i = self::skip_whitespace($sourcecode, $i);
 					$end_ident = self::skip_ident_chars($sourcecode, $i);
 					$ident_name = substr($sourcecode, $i, $end_ident - $i);
+					if ($conf_verbosity>2) print "Found ident $ident_name type $type pos $i\n";
 					$symbol = array( 'name' => $ident_name, 'pos' => $i, 'type' => $type, 'parent' => $parent );
 					
 					// Is it an array?
@@ -471,6 +472,10 @@ class CCpp extends Language {
 					$comma_pos     = strpos($sourcecode, ",", $i);
 					$semicolon_pos = strpos($sourcecode, ";", $i);
 					$i = (($comma_pos != false && $comma_pos < $semicolon_pos) ? $comma_pos : $semicolon_pos) + 1;
+					
+					// Avoid infinite loop if last construct is invalid
+					if ($comma_pos == false && $semicolon_pos == false)
+						$i = $end;
 				} while ($comma_pos != false && $comma_pos < $semicolon_pos);
 				continue;
 			}
@@ -501,15 +506,21 @@ class CCpp extends Language {
 				
 				if ($ident_name == "while" && $inside_dowhile)
 					$inside_dowhile = false;
-				else
+				else {
+					if ($conf_verbosity>2) print "Found loop $ident_name\n";
 					$symbols[] = array( 'name' => $ident_name, 'pos' => $i, 'type' => 'loop', 'parent' => $parent );
+				}
 			}
 			
 			// Control statements
-			if ($ident_name == "switch")
+			if ($ident_name == "switch") {
+				if ($conf_verbosity>2) print "Found switch $ident_name\n";
 				$symbols[] = array( 'name' => $ident_name, 'pos' => $i, 'type' => 'switch', 'parent' => $parent );
-			if ($ident_name == "goto")
+			}
+			if ($ident_name == "goto") {
+				if ($conf_verbosity>2) print "Found goto $ident_name\n";
 				$symbols[] = array( 'name' => $ident_name, 'pos' => $i, 'type' => 'goto', 'parent' => $parent );
+			}
 				
 			if ($ident_name == "for" || $ident_name == "while" || $ident_name == "switch" || $ident_name == "if" || $ident_name == "catch") {
 				$i = strpos($sourcecode, "(", $i);
@@ -792,7 +803,6 @@ class CCpp extends Language {
 					$open_brace_pos = strpos($sourcecode, "(", $i);
 					
 					if ($open_brace_pos && $open_brace_pos < $sc_pos && $open_brace_pos < $curly_pos) {
-						$i = self::find_matching($sourcecode, $open_brace_pos);
 						if ($sc_pos !== false && $sc_pos < $curly_pos) 
 							$symbol['type'] = "function prototype"; 
 						else {
