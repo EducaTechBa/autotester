@@ -343,6 +343,7 @@ class ExternalTool extends AbstractTool {
 		
 		file_put_contents($scriptPath, $bashCode);
 		chmod($scriptPath, 0755);
+		pcntl_signal(SIGPIPE, function() { exit; }); // Ensure that program ends on excessive output
 		$start_time = time();
 		exec( "$scriptPath", $output, $return );
 		
