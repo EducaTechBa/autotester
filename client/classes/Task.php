@@ -91,8 +91,6 @@ class Task {
 			//    array( 0 => "compile", 1 => "debug" )
 			// In this case, numeric key shall be ignored, and $tool shall equal value ($tool_options)
 			if (is_numeric($tool) && !is_array($tool_options)) $tool = $tool_options;
-			
-			// $tool_options is somehow still invalid!? shouldn't happen
 			if (!is_array($tool_options)) $tool_options = array();
 			
 			// $tool is in form "kind[id]" where [id] part is used to differentiate multiple tools of same kind
@@ -148,13 +146,14 @@ class Task {
 					}
 					
 					// We didn't find the exact tool, use the closest match
-					if (empty($tools[$tool]) && !empty($closest_match))
+					if (empty($tools[$tool]) && !empty($closest_match)) {
 						$tools[$tool] = $closest_match;
+					}
 				}
 			}
 			
-			// Tool not found in configuration, try to find a plugin of this type
-			if (empty($tools[$tool]))
+			// Tool not found in configuration, try to find a plugin of this type (unless it "requires" certain tool)
+			if (empty($tools[$tool]) && !array_key_exists('require', $tool_options))
 				$tools[$tool] = Utils::findPlugin( $toolname, $language, "", $tool_options );
 			
 			// Still empty... sorry, we failed
