@@ -44,12 +44,20 @@ $statuses = array(
 	array( "id" => "internal", "code" => 10, "label" => tr("Internal error"), "description" => tr("Internal error with autotester system") ),
 	array( "id" => "unzip", "code" => 11, "label" => tr("Not a ZIP file"), "description" => tr("Unzip command failed") ),
 	array( "id" => "tool", "code" => 12, "label" => tr("Internal error"), "description" => tr("Internal error - a tool failed to run") ),
+	array( "id" => "parser_ok", "code" => 201, "label" => tr("OK"), "description" => tr("Code successfully parsed") ),
+	array( "id" => "starter_code_modified", "code" => 202, "label" => tr("Starter code modified"), "description" => tr("Starter code was defined for this task, but you modified it") ),
+	array( "id" => "forbidden_substring", "code" => 203, "label" => tr("Forbidden"), "description" => tr("Something forbidden was found in your code") ),
+	array( "id" => "forbidden_array", "code" => 204, "label" => tr("Arrays are forbidden"), "description" => tr("Using arrays is forbidden in this task") ),
+	array( "id" => "forbidden_global", "code" => 205, "label" => tr("Globals are forbidden"), "description" => tr("Using global variables etc. is forbidden in this task") ),
+	array( "id" => "missing_substring", "code" => 206, "label" => tr("Required code"), "description" => tr("Your code is missing something that is required in this task") ),
+	array( "id" => "missing_symbol", "code" => 207, "label" => tr("Required code"), "description" => tr("Your code is missing something that is required in this task") ),
+	array( "id" => "forbidden_symbol", "code" => 208, "label" => tr("Forbidden"), "description" => tr("Something forbidden was found in your code") ),
 	array( "id" => "profiler_ok", "code" => 701, "label" => tr("OK"), "description" => tr("Profiler reported no known errors") ),
 	array( "id" => "oob", "code" => 702, "label" => tr("Memory error"), "description" => tr("Memory error (exceeded array/vector size or illegal pointer operation)") ),
 	array( "id" => "uninit", "code" => 703, "label" => tr("Uninitialized"), "description" => tr("Program is accessing a variable that wasn't initialized") ),
 	array( "id" => "memleak", "code" => 704, "label" => tr("Memory leak"), "description" => tr("Allocated memory was not freed") ),
 	array( "id" => "invalid_free", "code" => 705, "label" => tr("Bad deallocation"), "description" => tr("Attempting to free memory that wasn't allocated") ),
-	array( "id" => "mismatched_free", "code" => 705, "label" => tr("Wrong deallocator"), "description" => tr("Wrong type of deallocation used (delete vs. delete[] ...)") ),
+	array( "id" => "mismatched_free", "code" => 706, "label" => tr("Wrong deallocator"), "description" => tr("Wrong type of deallocation used (delete vs. delete[] ...)") ),
 );
 
 $newlines = array( "\r\n", "\\n", "\n" );
@@ -105,6 +113,13 @@ function show_table($task, $result) {
 			$icon = "<i class=\"fa fa-check\" style=\"color: green\"></i>"; 
 		else 
 			$icon = "<i class=\"fa fa-times\" style=\"color: red\"></i>"; 
+			
+		// Get detailed status text for parser errors
+		if ($tr['status'] == 2) {
+			foreach($tr['tools'] as $key => $value)
+				if (substr($key, 0, 5) == "parse" && $value['status'] != 1)
+					$tr['status'] = 200 + $value['status'];
+		}
 			
 		// Get detailed status text for profiler errors
 		if ($tr['status'] == 7) {
@@ -206,6 +221,19 @@ function generate_report($the_test, $test_result) {
 	$report = tr("TEST STATUS: ") . $status_text . "\n\n";
 	$raw = "";
 	
+	// Parser output
+	if ($test_result['status'] >= 200 && $test_result['status'] < 300) {
+		$pr = $test_result['tools']['parse'];
+		if ($pr['status'] != 2) $report .= $pr['message'] . "\n\n";
+		if ($pr['status'] == 3 || $pr['status'] == 4 || $pr['status'] == 5 || $pr['status'] == 8) {
+			$forbidden = substr($pr['message'], strrpos($pr['message'], " ") + 1);
+			// TODO show context
+		}
+		if ($pr['status'] == 2) {
+			$report .= "Starter code:\n\n<pre>" . str_replace("\\n", "reallybackslashen", htmlentities($the_test['parse']['starter_code'])) . "</pre>";
+		}
+	}
+	
 	if (!array_key_exists("tools", $test_result)) {
 		$tmpfname = tempnam("/tmp/render-debug-data", "FOO");
 		file_put_contents($tmpfname, "NO TOOLS:\n" . json_encode($the_test, JSON_PRETTY_PRINT) . "\n\n" . json_encode($test_result, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
@@ -276,6 +304,7 @@ function generate_report($the_test, $test_result) {
 
 	$report .= "\n\n$raw";
 	$report = str_replace($newlines, "<br>", $report);
+	$report = str_replace("reallybackslashen", "\\n", $report);
 	
 	return $report;
 }
@@ -300,7 +329,23 @@ function show_test($task, $result, $test) {
 	}
 	
 	$test_result = $result['test_results'][$test];
+	
+	// Special case - parser error in zeroth test
+	if ($test_result['status'] == 2 && !array_key_exists('parse', $the_test)) {
+		foreach ($task['tests'] as $t) {
+			if (array_key_exists('parse', $t)) {
+				$the_test = $t;
+				break;
+			}
+		}
+	}
 
+	// Get detailed status text for parser errors
+	if ($test_result['status'] == 2) {
+		foreach($test_result['tools'] as $key => $value)
+			if (substr($key, 0, 5) == "parse" && $value['status'] != 1)
+				$test_result['status'] = 200 + $value['status'];
+	}
 	if ($test_result['status'] == 7) {
 		foreach($test_result['tools'] as $key => $value)
 			if (substr($key, 0, 7) == "profile" && $value['status'] != 1)
