@@ -37,7 +37,8 @@ class ExternalTool extends AbstractTool {
 		// "nice" => "10",
 		"limit_output" => 10000,
 		"memory" => 0,
-		"nice" => 0
+		"nice" => 0,
+		"vars" => []
 	);
 	
 	
@@ -181,6 +182,9 @@ class ExternalTool extends AbstractTool {
 		// Always enable coredumps
 		$cmd = "ulimit -c 1000000; $cmd";
 		
+		foreach($env['vars'] as $key => $value)
+			$cmd = "export $key=$value\n$cmd";
+		
 		// Execute appropriate type of plugin
 		if ($env['type'] == "exec")
 			$result = $this->executeCommandExecBash($cmd, $env);
@@ -219,7 +223,7 @@ class ExternalTool extends AbstractTool {
 	private function executeCommandPopen($cmd, $env)
 	{
 		global $conf_max_program_output;
-		$cmd = "export PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin; $cmd";
+		$cmd = "export PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin\n$cmd";
 		Utils::debugLog ( "CMD (popen): $cmd", 2 );
 
 		$descriptorspec = array(
