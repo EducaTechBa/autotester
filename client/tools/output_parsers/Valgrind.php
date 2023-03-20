@@ -98,9 +98,9 @@ class Valgrind extends ExternalTool {
 							$current_message['file'] = $profiler_file;
 							$current_message['line'] = $profiler_lineno;
 						}
-						if ($alLocation === true && !array_key_exists("file_alloced", $current_message)) {
-							$current_message['file_alloced'] = $profiler_file;
-							$current_message['line_alloced'] = $profiler_lineno;
+						if ($alLocation === true && !array_key_exists("file_allocated", $current_message)) {
+							$current_message['file_allocated'] = $profiler_file;
+							$current_message['line_allocated'] = $profiler_lineno;
 						}
 					}
 				}
