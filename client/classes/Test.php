@@ -340,9 +340,12 @@ class Test {
 		$zip_file = $this->task->zipFile;
 
 		// Find unused path
+		$attempts = 0;
 		do {
 			$this->instance = rand(0, $conf_max_tasks);
 			$path = $conf_basepath . "/bs_" . $this->instance;
+			if ($attempts++ > $conf_max_tasks / 3)
+				$conf_max_tasks *= 10;
 		} while (file_exists($path));
 
 		if (!mkdir($path, 0777, true)) {
