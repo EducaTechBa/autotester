@@ -88,8 +88,15 @@ if (php_sapi_name() == "cli") {
 			$result_json = json_encode( $result, JSON_PRETTY_PRINT );
 			if ($argc >= 4)
 				file_put_contents( $argv[3], $result_json );
-			else
+			else {
 				print $result_json . "\n";
+				$total = $passed = 0;
+				foreach ($result['test_results'] as $test) {
+					$total++;
+					if ($test['status'] == 1) $passed++;
+				}
+				print "Passed $passed / $total.\n";
+			}
 			print "\nDone.\n";
 		}
 		else
