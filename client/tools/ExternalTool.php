@@ -220,8 +220,8 @@ class ExternalTool extends AbstractTool {
 	{
 		global $conf_max_program_output;
 		$cmd = "export PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin; $cmd";
+		Utils::debugLog ( "CMD (popen): $cmd", 2 );
 
-		$stderr_file   = $this->test->path() . "/buildservice_stderr.txt";
 		$descriptorspec = array(
 			0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
 			1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
@@ -236,7 +236,7 @@ class ExternalTool extends AbstractTool {
 		if ($output_limit == 10) $output_limit = -1; // Don't limit output
 		
 		$process = proc_open($cmd, $descriptorspec, $pipes, $cwd, $cmd_env);
-		if ($env['output_stream'] == "both")
+		if ($env['output_stream'] == "both" || array_key_exists('stderr', $env))
 			stream_set_blocking($pipes[2], 0);
 		
 		if (is_resource($process)) {
@@ -258,6 +258,11 @@ class ExternalTool extends AbstractTool {
 				// FIXME? stderr will be appended to stdout
 				$result['output'] = stream_get_contents( $pipes[1], $output_limit );
 				$result['output'] .= stream_get_contents( $pipes[2], $output_limit );
+			}
+			
+			if (array_key_exists('stderr', $env)) {
+				$stderr = stream_get_contents($pipes[2]);
+				file_put_contents( $this->test->path() . "/" . $env['stderr'], $stderr );
 			}
 			
 			$result['duration'] = time() - $start_time;
@@ -283,6 +288,8 @@ class ExternalTool extends AbstractTool {
 		$stdin_file    = $this->test->path() . "/buildservice_stdin.txt";
 		$stderr_file   = $this->test->path() . "/buildservice_stderr.txt";
 		$stdout_file   = $this->test->path() . "/buildservice_stdout.txt";
+		if (array_key_exists('stderr', $env))
+			$stderr_file   = $this->test->path() . "/" . $env['stderr'];
 		
 		$run_result = array( 'status' => EXECUTION_SUCCESS );
 		
@@ -311,11 +318,13 @@ class ExternalTool extends AbstractTool {
 		
 		$output = array();
 		
-		if ($env['output_stream'] == "stdin")
+		if ($env['output_stream'] == "stdout" && array_key_exists('stderr', $env))
+			$output_selection = "2>" . $env['stderr'];
+		else if ($env['output_stream'] == "stdout")
 			$output_selection = "2>/dev/null";
 		else if ($env['output_stream'] == "stderr")
 			$output_selection = "1>/dev/null 2>&1";
-		else if ($env['output_stream'] == "both")
+		else // if ($env['output_stream'] == "both") // both is default
 			$output_selection = "2>&1";
 			
 		$output_limit = $env['limit_output'] + 10;
@@ -356,7 +365,9 @@ class ExternalTool extends AbstractTool {
 		$output = array();
 		Utils::debugLog ( "CMD (exec): $cmd", 2 );
 		
-		if ($env['output_stream'] == "stdin")
+		if ($env['output_stream'] == "stdin" && array_key_exists('stderr', $env))
+			$output_selection = "2>" . $env['stderr'];
+		else if ($env['output_stream'] == "stdin")
 			$output_selection = "2>/dev/null";
 		else if ($env['output_stream'] == "stderr")
 			$output_selection = "1>/dev/null 2>&1";
