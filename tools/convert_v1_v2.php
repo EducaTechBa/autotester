@@ -1,5 +1,7 @@
 <?php 
 
+// Convert from file format V1 into V2
+
 $data = json_decode(file_get_contents($argv[1]), true);
 
 $data2 = array();
