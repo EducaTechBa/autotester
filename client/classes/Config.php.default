@@ -242,6 +242,25 @@ $conf_tools = array(
 			),
 			"version_line" => "{path} --version | cut -d ' ' -f 2 ",
 		),
+		array (
+			'name' => 'asan',
+			'path' => 'gcc',
+			'cmd' => '{executable}',
+			'options' => '',
+			'version_line' => '{path} --version | grep ^gcc | sed -e \'s/gcc\\s(.*)\\s//\'',
+			'environment' => array (
+				"timeout" => 10,
+				"memory" => 0,
+				"output_stream" => "stderr",
+				"type" => "exec",
+				"vars" => [
+					"ASAN_OPTIONS" => "halt_on_error=0:disable_coredump=0:handle_segv=0"
+				]
+			),
+			'features' => array (
+				'fast' => '',
+			)
+		),
 	),
 	"http" => array(
 		array(

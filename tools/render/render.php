@@ -243,7 +243,9 @@ function generate_report($the_test, $test_result) {
 	if (array_key_exists('output', $cr) && !empty($cr['output']))
 		$raw .= tr("COMPILER OUTPUT:") . "\n" . $cr['output'] . "\n\n";
 
-	if (array_key_exists('profile[memcheck]', $test_result['tools']) && $test_result['tools']['profile[memcheck]']['status'] > 1)
+	if (array_key_exists('profile[asan]', $test_result['tools']) && $test_result['tools']['profile[asan]']['status'] > 1)
+		$pr = $test_result['tools']['profile[asan]'];
+	else if (array_key_exists('profile[memcheck]', $test_result['tools']) && $test_result['tools']['profile[memcheck]']['status'] > 1)
 		$pr = $test_result['tools']['profile[memcheck]'];
 	else if (array_key_exists('profile[sgcheck]', $test_result['tools']))
 		$pr = $test_result['tools']['profile[sgcheck]'];
@@ -256,7 +258,17 @@ function generate_report($the_test, $test_result) {
 			$report .= tr("Error in line ") . message_position($msg);
 			foreach($statuses as $st)
 				if ($st['code'] == 700 + $msg['type'])
-					$report .= ":\n" . $st['description'] . "\n\n";
+					$report .= ":\n" . $st['description'] . "\n";
+			if (array_key_exists('file_allocated', $msg)) {
+				$msg['line'] = $msg['line_allocated'];
+				$msg['file'] = $msg['file_allocated'];
+				$report .= tr("Allocated in line ") . message_position($msg) . "\n";
+			}
+			if (array_key_exists('file_freed', $msg)) {
+				$msg['line'] = $msg['line_freed'];
+				$msg['file'] = $msg['file_freed'];
+				$report .= tr("Freed in line ") . message_position($msg) . "\n";
+			}
 		}
 	}
 	if (array_key_exists('output', $pr) && !empty($pr['output']) && $pr['status'] > 1)

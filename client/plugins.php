@@ -27,6 +27,7 @@ $conf_pluginses = array(
 	"output_parsers/Gcc[C++]" => array( "tool" => "compile", "name" => "g++" ),
 	"output_parsers/Gdb" => array( "tool" => "debug", "name" => "gdb" ),
 	"output_parsers/Valgrind" => array( "tool" => "profile", "name" => "valgrind" ),
+	"output_parsers/Asan" => array( "tool" => "profile", "name" => "asan" ),
 	"output_parsers/Octave" => array( "tool" => "execute", "name" => "octave" ), // Detect errors in Octave/Matlab
 
 	// C & C++

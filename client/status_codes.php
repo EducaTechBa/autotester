@@ -51,6 +51,8 @@ define("PROFILER_UNINIT",       3);
 define("PROFILER_MEMLEAK",      4);
 define("PROFILER_INVALID_FREE", 5);
 define("PROFILER_MISMATCHED_FREE", 6);
+define("PROFILER_FPE",          7);
+define("PROFILER_MEMORY_EXCEEDED", 8);
 
 // Test status
 define("TEST_SUCCESS",           1);
