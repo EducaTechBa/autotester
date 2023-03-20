@@ -319,13 +319,24 @@ function show_test($task, $result, $test) {
 
 
 	
-	$the_test = array();
+	$the_test = null;
 	$test_no = 0;
 	foreach ($task['tests'] as $t) {
-		if (array_key_exists('options', $t) && in_array("silent", $t['options'])) continue;
 		if (!array_key_exists('id', $t) || !array_key_exists($t['id'], $result['test_results'])) continue;
 		$test_no++;
 		if ($t['id'] == $test) { $the_test = $t; break; }
+	}
+	if ($the_test === null && $test == 1) {
+		foreach ($task['tests'] as $t) {
+			if (!array_key_exists('id', $t)) { $the_test = $t; break; }
+		}
+	}
+	if ($the_test === null) {
+		?>
+		<p style="color: red; font-weight: bold"><?=tr("Illegal request")?></p>
+		<p><?php printf(tr("Test with id %d not found."), $test); ?></p>
+		<?php
+		return;
 	}
 	
 	$test_result = $result['test_results'][$test];
