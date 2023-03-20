@@ -99,7 +99,8 @@ $conf_tools = array(
 				"debug" => "-g",
 				"warn" => "-Wall -Wuninitialized -Winit-self -Wfloat-equal -Wno-sign-compare -Wno-unused-result",
 				"pedantic" => "-Werror=implicit-function-declaration -Werror=vla -pedantic",
-				"error" => "-Wreturn-type -Werror"
+				"error" => "-Wreturn-type -Werror",
+				'asan' => '-fsanitize=address -fno-omit-frame-pointer -fno-common'
 			)
 		),
 
@@ -118,7 +119,8 @@ $conf_tools = array(
 				"optimize" => "-O1",
 				"debug" => "-ggdb",
 				"warn" => "-Wall -Wuninitialized -Winit-self -Wfloat-equal -Wno-sign-compare",
-				"pedantic" => "-Werror=implicit-function-declaration -Werror=vla -pedantic"
+				"pedantic" => "-Werror=implicit-function-declaration -Werror=vla -pedantic",
+				'asan' => '-fsanitize=address -fsanitize-recover=address -fno-omit-frame-pointer'
 			)
 		),
 
