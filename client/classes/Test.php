@@ -2,7 +2,7 @@
 
 
 // AUTOTESTER - automated compiling, execution, debugging, testing and profiling
-// (c) Vedran Ljubovic and others 2014-2019.
+// (c) Vedran Ljubovic and others 2014-2023.
 //
 //     This program is free software: you can redistribute it and/or modify
 //     it under the terms of the GNU General Public License as published by
@@ -23,10 +23,9 @@ class Test {
 	public $tools = array(), $task = array(), $options = array();
 	public $result = array( 'success' => true, 'status' => TEST_SUCCESS, 'tools' => array() );
 	public $sourceFiles = array();
-	public $id=0, $instance=0, $name="", $executable="";
+	public $id=0, $instance=0, $executable="";
 
 	private $testPath = "";
-	private $notTools = array( "id", "name", "options" );
 
 	public function __construct($task, $spec) {
 		global $conf_extensions;
@@ -50,48 +49,89 @@ class Test {
 			$extensions[] = "*" . $ext;
 		$this->sourceFiles = Utils::expandFilenameGlob( $this->testPath, $extensions );
 
-		// Parse specification array
+		if ($task->version == 2)
+			$this->parseVersion2($spec);
+		else
+			$this->parse($spec);
+		
+		if ($this->id == 'prepare')
+			Utils::debugLog( "- Prepare (path " . $this->testPath . ")", 1 );
+		else
+			Utils::debugLog( "- Test " . $this->id . " (path " . $this->testPath . ")", 1 );
+	}
+	
+	private function parse($spec) {
+		if (!array_key_exists('tools', $spec)) {
+			Utils::debugLog( "- Test " . $spec['id'] . " specifies no tools - possibly v2?", 1 );
+			$this->parseVersion2($spec);
+			return;
+		}
+		if (array_key_exists('id', $spec)) $this->id = $spec['id'];
+		if (array_key_exists('options', $spec)) $this->options = $spec['options'];
+		
+		foreach($spec['tools'] as $tool) {
+			if (is_array($tool)) {
+				$toolName = array_keys($tool)[0];
+				$toolProperties = $tool[$toolName];
+			} else {
+				$toolName = $tool;
+				$toolProperties = [];
+			}
+
+			if (!$this->parseTool($toolName, $toolProperties)) break;
+		}
+	}
+	
+	private function parseVersion2($spec) {
+		$notTools = array( "id", "name", "options" );
+		
 		foreach($spec as $key => $value) {
 			if ($key === "id") $this->id = $value;
-			if ($key === "name") $this->name = $value;
 			if ($key === "options") $this->options = $value;
 			// Ignore other keys in array
-			if (in_array($key, $this->notTools)) continue;
+			if (in_array($key, $notTools)) continue;
 
-			// We don't want test specifications to execute arbitrary commands on buildhost
-			if (is_array($value) && array_key_exists("cmd", $value)) 
-				unset($value['cmd']);
-
-			// Find tool in task tools
-			if (array_key_exists($key, $this->task->tools[$task->language])) {
-				$tool = clone $this->task->tools[$task->language][$key];
-				if (!$tool->merge($value)) {
-					// Merge failed usually means that required features weren't properly declared in task header 
-					$this->result['success'] = false;
-					$this->result['status'] = TEST_INTERNAL_ERROR;
-					$this->result['message'] = "Cannot instantiate tool $key with given options";
-					break;
-				}
-				$this->tools[$key] = $tool;
-
-			} else {
-				// Tool doesn't exist in task... Let's try to create a new one, 
-				// hoping it's internal tool such as execute
-				$toolname = preg_replace("/\[.*?\]/", "", $key);
-				$this->tools[$key] = Utils::findPlugin( $toolname, $task->language, "", $value );
-				if (!$this->tools[$key]) {
-					$this->result['success'] = false;
-					$this->result['status'] = TEST_INTERNAL_ERROR;
-					$this->result['message'] = "Tool $toolname not found";
-					Utils::debugLog( "Test failed - tool $toolname not found", 1 );
-					break;
-				}
-			}
-			// Backlink
-			$this->tools[$key]->test =& $this;
+			if (!$this->parseTool($key, $value)) break;
 		}
+	}
+	
+	private function parseTool($toolName, $toolProperties) {
+		if (!is_array($toolProperties))
+			$toolProperties = [ $toolProperties ] ;
 		
-		Utils::debugLog( "- Test " . $this->id . " (path " . $this->testPath . ")", 1 );
+		// We don't want test specifications to execute arbitrary commands on buildhost
+		if (array_key_exists("cmd", $toolProperties))
+			unset($toolProperties['cmd']);
+
+		// Find tool in task tools
+		$language = $this->task->language;
+		if (array_key_exists($toolName, $this->task->tools[$language])) {
+			$tool = clone $this->task->tools[$language][$toolName];
+			if (!$tool->merge($toolProperties)) {
+				// Merge failed usually means that required features weren't properly declared in task header 
+				$this->result['success'] = false;
+				$this->result['status'] = TEST_INTERNAL_ERROR;
+				$this->result['message'] = "Cannot instantiate tool $toolName with given options";
+				return false;
+			}
+			$this->tools[$toolName] = $tool;
+
+		} else {
+			// Tool doesn't exist in task... Let's try to create a new one, 
+			// hoping it's internal tool such as execute
+			$cleanedToolName = preg_replace("/\[.*?\]/", "", $toolName);
+			$this->tools[$toolName] = Utils::findPlugin( $cleanedToolName, $language, "", $toolProperties );
+			if (!$this->tools[$toolName]) {
+				$this->result['success'] = false;
+				$this->result['status'] = TEST_INTERNAL_ERROR;
+				$this->result['message'] = "Tool $cleanedToolName not found";
+				Utils::debugLog( "Test failed - tool $cleanedToolName not found", 1 );
+				return false;
+			}
+		}
+		// Backlink
+		$this->tools[$toolName]->test =& $this;
+		return true;
 	}
 
 	public function path() { return $this->testPath; }

@@ -74,34 +74,68 @@ Task metadata
     
       Descriptive name to be displayed in ui. By default it is "Test N" where N is ordinal number of test.
       
+    * description : string
+    
+      Text that provides further explanation of this test and gives hints to programmers.
+      
     * options : array
     
       List of strings that control how this test should be processed. Available options are:
       
-        * nodetail : test results will contain no information other then whether test passed or failed
-        * silent : test results will skip this test completely (overrides "nodetail")
+        * nodetail : test results will contain no information other than whether the test passed or failed
+        * silent : test results will skip this test completely if successful (overrides "nodetail"), and only return information if test failed
         * terminate : if this test fails, further tests are not executed
-        * reuse : normally, the whole tree is deleted after each test and a new one is created; but if reuse option is passed, tests will be executed in the same folder which is useful e.g. for sequential testing of file-related operations
+        * reuse : normally, the whole filesystem tree is deleted after each test and a new one is created; but if reuse option is passed, tests will be executed in the same folder which is useful e.g. for sequential testing of file-related operations or if you don't want to compile each test but reuse the already compiled binaries
+      
+    * points : double
+    
+      Some number of points awarded to this test (overrides "weight").
+      
+    * weight : double
+    
+      Fraction of total number of points for the assignment that this test carries. By default, all tests have weight 1. If you want a particular test to carry twice as much points as other tests, you can give it
+      weight 2, or if you want it to not be scored just give it weight 0.
         
 
   Example of a single test would look like this:
   
         {
-            "id": 6,
-            "patch" : {
-                "position" : "main",
-                "code" : "try\n    {\n\n        Skladiste ETF;\n        ETF.DodajSanduk(50, \"Voce\", {1,3,5,6});\n        ETF.DodajVrecu(0.1, \"Brasno\", 25.5);\n        ETF.DodajBure(5, \"Krv\", 1300, 150);\n        ETF.DodajSpremnik(new Vreca(0.5, \"Secer\", 40), true);\n        Bure *b = new Bure(15, \"Voda\", 1000, 200);\n        ETF.DodajSpremnik(b, false);\n        delete b;\n        ETF.IzlistajSkladiste();\n\n    }\n    catch(std::range_error re)\n    {\n        std::cout << re.what();\n    }"
-            },
-            "compile" : {},
-            "execute": {
-                "expect": [
-                    "Vrsta spremnika: Bure\nSadrzaj: Voda\nVlastita tezina: 15 (kg)\nSpecificna tezina tecnosti: 1000 (kg\/m^3)\nZapremina tecnosti: 200 (l)\nUkupna tezina: 215 (kg)\nVrsta spremnika: Bure\nSadrzaj: Krv\nVlastita tezina: 5 (kg)\nSpecificna tezina tecnosti: 1300 (kg\/m^3)\nZapremina tecnosti: 150 (l)\nUkupna tezina: 200 (kg)\nVrsta spremnika: Sanduk\nSadrzaj: Voce\nTezine predmeta: 1 3 5 6 (kg)\nVlastita tezina: 50 (kg)\nUkupna tezina: 65 (kg)\nVrsta spremnika: Vreca\nSadrzaj: Secer\nVlastita tezina: 0.5 (kg)\nTezina pohranjene materije: 40 (kg)\nUkupna tezina: 40.5 (kg)\nVrsta spremnika: Vreca\nSadrzaj: Brasno\nVlastita tezina: 0.1 (kg)\nTezina pohranjene materije: 25.5 (kg)\nUkupna tezina: 25.6 (kg)"
-                ]
-            },
-            "debug" : {}, "profile[memcheck]" : {}, "profile[sgcheck]" : {}, "options" : [ "nodetail", "reuse" ]
+            "id": 1,
+            "tools" : [
+                "compile", "execute", "debug", "profile"
+            ],
         },
 
-        
+  A more elaborate example:
+  
+        {
+            "id": 6,
+            "name": "Warehouse test with options",
+            "tools" : [
+                {
+                    "patch" : {
+                        "position" : "main",
+                        "code" : "try\n    {\n\n        Skladiste ETF;\n        ETF.DodajSanduk(50, \"Voce\", {1,3,5,6});\n        ETF.DodajVrecu(0.1, \"Brasno\", 25.5);\n        ETF.DodajBure(5, \"Krv\", 1300, 150);\n        ETF.DodajSpremnik(new Vreca(0.5, \"Secer\", 40), true);\n        Bure *b = new Bure(15, \"Voda\", 1000, 200);\n        ETF.DodajSpremnik(b, false);\n        delete b;\n        ETF.IzlistajSkladiste();\n\n    }\n    catch(std::range_error re)\n    {\n        std::cout << re.what();\n    }"
+                    }
+                },
+                "compile",
+                {
+                    "execute": {
+                        "expect": [
+                            "Vrsta spremnika: Bure\nSadrzaj: Voda\nVlastita tezina: 15 (kg)\nSpecificna tezina tecnosti: 1000 (kg\/m^3)\nZapremina tecnosti: 200 (l)\nUkupna tezina: 215 (kg)\nVrsta spremnika: Bure\nSadrzaj: Krv\nVlastita tezina: 5 (kg)\nSpecificna tezina tecnosti: 1300 (kg\/m^3)\nZapremina tecnosti: 150 (l)\nUkupna tezina: 200 (kg)\nVrsta spremnika: Sanduk\nSadrzaj: Voce\nTezine predmeta: 1 3 5 6 (kg)\nVlastita tezina: 50 (kg)\nUkupna tezina: 65 (kg)\nVrsta spremnika: Vreca\nSadrzaj: Secer\nVlastita tezina: 0.5 (kg)\nTezina pohranjene materije: 40 (kg)\nUkupna tezina: 40.5 (kg)\nVrsta spremnika: Vreca\nSadrzaj: Brasno\nVlastita tezina: 0.1 (kg)\nTezina pohranjene materije: 25.5 (kg)\nUkupna tezina: 25.6 (kg)"
+                        ]
+                    }
+                },
+                "debug", "profile"
+            ],
+            "options" : [ "nodetail", "terminate" ]
+        },
+
+* prepare : array of objects
+
+  Prepare is a task that will be executed before all the other tests. Its purpose is to prepare the working environment (in case "reuse" option is specified), e.g. it can compile the source code before testing, or
+  it can be used to perform some checks on the source code before running actual tests. Contents of "prepare" field are just an array of tools in the same format as with tests. If any of these tools fails, test results will include a single test with id "prepare" with output of tools that failed, and no tests will be executed. Thus, "prepare" is equivalent to a test with options "silent" and "terminate", but the test editing tool may treat it differently (e.g. only show it in "advanced" mode).
+
         
 Tools
 =====
@@ -176,7 +210,7 @@ All tools have certain common parameters that can be provided in task specificat
              "environment" : {
                  "stdin" : "John",
              },
-             "expect" : "What is your name? Hello, John!"
+             "expect" : [ "What is your name? Hello, John!" ]
           }
       
     * timeout : float
@@ -396,7 +430,7 @@ Tool parsers
 
 Normally, tool output (stdout) will be appended to test result so that users can process it as they wish. However, for convenient presentation, buildservice includes parsers for output of some tools. These parsers are very primitive and far from finished. We appreciate your support in improving tool parsers. At the moment we have parsers for following tools:
 
-  * gcc/g++
+  * gcc/g++ (including address sanitizer)
   * gdb
   * valgrind
   

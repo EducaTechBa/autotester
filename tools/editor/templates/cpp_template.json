@@ -1,0 +1,119 @@
+{
+    "id": 0,
+    "name": "Tehnike programiranja (2020\/2021), Zada\u0107a 4, Zadatak 2",
+    "languages": [
+        "C++"
+    ],
+    "tools": {
+        "compile": {
+            "require": "g++",
+            "features": [
+                "optimize",
+                "warn",
+                "pedantic",
+                "C++14"
+            ]
+        },
+        "compile[debug]": {
+            "require": "g++",
+            "features": [
+                "debug",
+                "C++14",
+                "asan"
+            ]
+        },
+        "execute": {
+            "require": "asan"
+        },
+        "debug": [],
+        "profile[asan]": {
+            "require": "asan",
+            "input_file": "stderr.txt",
+            "fast": true
+        }
+    },
+    "tests": [
+        {
+            "id": 3,
+            "name": "Test 3",
+            "tools": [
+                {
+                    "patch": [
+                        {
+                            "position": "main",
+                            "code": "\/\/AT (c9 - 3) (javni)\\n\\n_main();"
+                        }
+                    ]
+                },
+                "compile[debug]",
+                {
+                    "execute": {
+                        "environment": {
+                            "stdin": "5\\n0 0 d\\n1 1 1\\nd\\n1\\n5 6 8\\n5\\n17 20 31\\n6\\n30 30 30\\n2\\n123 -130 500\\n30"
+                        },
+                        "expect": [
+                            "Unesite broj kugli: Unesite centar za 1. kuglu: Neispravan centar, unesite ponovo:\\nUnesite poluprecnik: Neispravan poluprecnik, unesite ponovo:\\nUnesite centar za 2. kuglu: Unesite poluprecnik: Unesite centar za 3. kuglu: Unesite poluprecnik: Unesite centar za 4. kuglu: Unesite poluprecnik: Unesite centar za 5. kuglu: Unesite poluprecnik: \\nKugle nakon obavljenog sortiranja: \\n{(1,1,1),1}\\n{(30,30,30),2}\\n{(5,6,8),5}\\n{(17,20,31),6}\\n{(123,-130,500),30}"
+                        ]
+                    }
+                },
+                "debug",
+                "profile[asan]"
+            ],
+            "options": [ "silent", "terminate" ]
+        },
+        {
+            "id": 19,
+            "name": "Test 19",
+            "tools": [
+                {
+                    "patch": [
+                        {
+                            "position": "main",
+                            "code": "\/\/    AT14 (nekativni) - Iskljucivanje kugli iz sredine\\n    try {\\n        typedef std::shared_ptr<NepreklapajucaKugla> pokKugla;\\n        std::vector<pokKugla> p;\\n        for (int i = 1; i <= 10; i++) {\\n            p.push_back(std::make_shared<NepreklapajucaKugla>(i * 3, i * 4, i * 2, 1));\\n        }\\n        for(pokKugla &k : p) {\\n            k->Ispisi(); std::cout << std::endl;\\n        }\\n\\n        p.erase(p.begin() + 5);\\n        p.erase(p.begin() + 5);\\n        p.erase(p.begin() + 5);\\n\\n        try{NepreklapajucaKugla(16,21,11,2);}catch(std::logic_error ex){std::cout<<\\" OK1 \\" << ex.what() << std::endl;}\\n        try{NepreklapajucaKugla(16,21,11,1);}catch(std::logic_error ex){std::cout<< \\" OK2 \\" << ex.what() << std::endl;}\\n        try{NepreklapajucaKugla(16,21,11,0.73);}catch(std::logic_error ex){std::cout<< \\" NOT OK \\";}\\n        std::cout << std::endl;\\n        for(pokKugla &k : p) {\\n            k->Ispisi(); std::cout << std::endl;\\n        }\\n    }\\n    catch (std::logic_error &ex) {\\n        std::cout << \\"OK \\" << ex.what();\\n    }\\n    catch (...) {\\n        std::cout << \\"NOT OK\\";\\n    }"
+                        }
+                    ]
+                },
+                "compile[debug]",
+                {
+                    "execute": {
+                        "expect": [
+                            "{(3,4,2),1}\\n{(6,8,4),1}\\n{(9,12,6),1}\\n{(12,16,8),1}\\n{(15,20,10),1}\\n{(18,24,12),1}\\n{(21,28,14),1}\\n{(24,32,16),1}\\n{(27,36,18),1}\\n{(30,40,20),1}\\n OK1 Nedozvoljeno preklapanje\\n OK2 Nedozvoljeno preklapanje\\n\\n{(3,4,2),1}\\n{(6,8,4),1}\\n{(9,12,6),1}\\n{(12,16,8),1}\\n{(15,20,10),1}\\n{(27,36,18),1}\\n{(30,40,20),1}\\t"
+                        ]
+                    }
+                },
+                "debug",
+                "profile[asan]"
+            ]
+        },
+        {
+            "id": 4,
+            "name": "Test 4",
+            "tools": [
+				"hello",
+                "compile[debug]",
+                {
+                    "execute": {
+                        "environment": {
+                            "stdin": "18 16 14 12 122 241 216 1281.15 y\\n"
+                        },
+                        "expect": [
+                            "Unesite brojeve (bilo koji ne-broj oznacava kraj): \\nRezultati razvrstavanja po multiplikativnom digitalnom korijenu:\\n2: 12 216\\n4: 14 122\\n6: 16 1281\\n8: 18 241"
+                        ]
+                    }
+                },
+                "debug",
+                {
+                    "profile[asan]": {
+                        "require": "asan",
+                        "input_file": "stderr.txt",
+                        "fast": true
+                    }
+                }
+            ]
+        }
+	],
+    "version": "3",
+    "prepare": [
+        "compile"
+    ]
+}

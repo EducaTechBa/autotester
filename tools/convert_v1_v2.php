@@ -7,6 +7,7 @@ $data = json_decode(file_get_contents($argv[1]), true);
 $data2 = array();
 $data2['id'] = $data['id'];
 $data2['name'] = $data['name'];
+$data2['version'] = "2";
 $data2['languages'] = array ( $data['language'] );
 
 $data2['tools'] = array ( 

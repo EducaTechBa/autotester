@@ -1,0 +1,48 @@
+{
+    "id": 0,
+    "name": "C++ Template with Address Sanitizer",
+    "version": "3",
+    "languages": [
+        "C++"
+    ],
+    "tools": {
+        "compile": {
+            "require": "g++",
+            "features": [
+                "optimize",
+                "warn",
+                "pedantic",
+                "C++14"
+            ]
+        },
+        "compile[debug]": {
+            "require": "g++",
+            "features": [
+                "debug",
+                "C++14",
+                "asan"
+            ]
+        },
+        "execute": {
+            "require": "asan"
+        },
+        "debug": [],
+        "profile[asan]": {
+            "require": "asan",
+            "input_file": "stderr.txt",
+            "fast": true
+        }
+    },
+    "prepare": [
+        "compile"
+    ],
+    "tests": [],
+    "testTemplate": {
+        "tools": [
+            "compile[debug]",
+            "execute",
+            "debug",
+            "profile[asan]"
+        ]
+    }
+}

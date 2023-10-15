@@ -1,0 +1,84 @@
+#content {
+    padding: 20px; 
+}
+
+
+#atDetails {
+    margin-left: 0px !important;
+}
+
+#atConfig {
+    margin-bottom: 10px;
+}
+
+#at_warning {
+    display: block;
+    text-align: center;
+}
+
+textarea {
+    margin-bottom: 8px;
+    resize:none;
+}
+
+#configAdvancedFeatures {
+    margin-top: 10px;
+    border: 1px solid #ccc!important;
+    border-radius: 10px;
+    border-style: inset;
+}
+
+.tab-pane {
+    padding-top:15px;
+}
+
+.currentTest {
+    background: #eee;
+}
+
+.validationFailed {
+    background-color: #fee !important;
+}
+
+.code-input {
+	font-family: monospace;
+}
+
+.bootstrap-tagsinput{
+	width: 100%;
+}
+.label-info{
+	background-color: #17a2b8;
+}
+.label {
+	display: inline-block;
+	padding: .25em .4em;
+	font-size: 75%;
+	font-weight: 700;
+	line-height: 1;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: baseline;
+	border-radius: .25rem;
+	transition: color .15s ease-in-out,background-color .15s ease-in-out,
+	border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+
+.toolIcon {
+	border: 1px solid #f5f5f5;
+	background: #f5f5f5;
+	border-radius: 8px;
+	box-sizing: border-box;
+	cursor: pointer;
+	user-select: none;
+	padding: 10px;
+	width: 100px;
+	height: 100px;
+}
+.toolIcon:hover {
+	border: 1px solid gray;
+}
+.toolIconName {
+	font-size: 12px;
+	
+}

@@ -2,7 +2,7 @@
 
 
 // AUTOTESTER - automated compiling, execution, debugging, testing and profiling
-// (c) Vedran Ljubovic and others 2014-2019.
+// (c) Vedran Ljubovic and others 2014-2023.
 //
 //     This program is free software: you can redistribute it and/or modify
 //     it under the terms of the GNU General Public License as published by
@@ -363,10 +363,10 @@ function list_progs($taskid) {
 }
 
 function prog_info($progid) {
-	global $global_status_codes;
+	$status_code_names = array("", "Awaiting tests", "Plagiarized", "Compile error", "Finished testing", "Graded", "No sources found", "Currently being tested", "Task rejected for testing");
 
 	$proginfo = json_query("getProgram", array("program" => $progid));
-	print "\nProgram ID: $progid\nName: ".$proginfo['name']."\nStatus: ".$global_status_codes[$proginfo['status']]." (".$proginfo['status'].")\n\nTask info:";
+	print "\nProgram ID: $progid\nName: ".$proginfo['name']."\nStatus: ".$status_code_names[$proginfo['status']]." (".$proginfo['status'].")\n\nTask info:";
 	task_info($proginfo['task']);
 }
 

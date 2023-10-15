@@ -1,5 +1,26 @@
 <?php
 
+// AUTOTESTER - automated compiling, execution, debugging, testing and profiling
+// (c) Vedran Ljubovic and others 2014-2023.
+//
+//     This program is free software: you can redistribute it and/or modify
+//     it under the terms of the GNU General Public License as published by
+//     the Free Software Foundation, either version 3 of the License, or
+//     (at your option) any later version.
+// 
+//     This program is distributed in the hope that it will be useful,
+//     but WITHOUT ANY WARRANTY; without even the implied warranty of
+//     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//     GNU General Public License for more details.
+// 
+//     You should have received a copy of the GNU General Public License
+//     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+// Renderer for test results
+
+require("status_codes.php");
+
 if (isset($_REQUEST['language'])) {
 	$language_id = basename($_REQUEST['language']);
 	if (!empty($language_id) && !preg_match("/\W/", $language_id))
@@ -89,7 +110,7 @@ function show_table($task, $result) {
 	
 	<script>
 	function showDetail(id) {
-		document.getElementById('form_test_id').value = "" + id;
+		document.getElementById('form_test_id').value = id;
 		document.getElementById('details_form').submit();
 		return false;
 	}
@@ -105,53 +126,61 @@ function show_table($task, $result) {
 	<?php
 	
 	$no = 0;
+	if (array_key_exists('prepare', $task)) {
+		$prepareTest = [ 'id' => 'prepare', 'options' => [ 'silent', 'terminate' ], 'tools' => $task['prepare'] ];
+		array_unshift($task['tests'], $prepareTest);
+	}
 	foreach($task['tests'] as $test) {
-		if (array_key_exists('options', $test) && in_array($test['options'], "silent")) continue;
 		if (!array_key_exists($test['id'], $result['test_results'])) continue;
 		$tr = $result['test_results'][$test['id']];
-		if ($tr['status'] == 1) 
+		if (array_key_exists('options', $test) && in_array("silent", $test['options']) && $tr['status'] == TEST_SUCCESS) continue;
+		if ($tr['status'] == TEST_SUCCESS) 
 			$icon = "<i class=\"fa fa-check\" style=\"color: green\"></i>"; 
 		else 
 			$icon = "<i class=\"fa fa-times\" style=\"color: red\"></i>"; 
 			
 		// Get detailed status text for parser errors
-		if ($tr['status'] == 2) {
+		if ($tr['status'] == TEST_SYMBOL_NOT_FOUND) {
 			foreach($tr['tools'] as $key => $value)
-				if (substr($key, 0, 5) == "parse" && $value['status'] != 1)
+				if (substr($key, 0, 5) == "parse" && $value['status'] != PARSER_OK)
 					$tr['status'] = 200 + $value['status'];
 		}
 			
 		// Get detailed status text for profiler errors
-		if ($tr['status'] == 7) {
+		if ($tr['status'] == TEST_PROFILER_ERROR) {
 			foreach($tr['tools'] as $key => $value)
-				if (substr($key, 0, 7) == "profile" && $value['status'] != 1)
+				if (substr($key, 0, 7) == "profile" && $value['status'] != PROFILER_OK)
 					$tr['status'] = 700 + $value['status'];
 		}
 
 		// Get status text
-		$status_text = "Ok";
-		if (array_key_exists('options', $test) && in_array($test['options'], "nodetail") && $tr['status'] != 1) 
-			$status_text = "Not ok";
+		$status_text = tr("Ok");
+		if (array_key_exists('options', $test) && in_array("nodetail", $test['options']) && $tr['status'] != TEST_SUCCESS) 
+			$status_text = tr("Not ok");
 		else foreach($statuses as $st)
 			if ($tr['status'] == $st['code'])
 				$status_text = $st['label'];
 		
 		// Gray color for hidden tests
-		if (array_key_exists('options', $test) && in_array($test['options'], "nodetail"))
+		if (array_key_exists('options', $test) && in_array("nodetail", $test['options']))
 			$class = "gray";
 		else
 			$class = "";
 		$no++;
 		
 		$nicetime = date(tr("F j, Y, g:i a"), $result['time']);
+		if ($test['id'] == 'prepare')
+			$noOut = tr("Pre-Test");
+		else 
+			$noOut = $no;
 		
 		?>
 		<tr>
-			<td class="<?=$class?>"><?=$no?></td>
+			<td class="<?=$class?>"><?=$noOut?></td>
 			<td class="<?=$class?>"><?=$icon?> <?=$status_text?></td>
 			<td class="<?=$class?>"><?=$nicetime?></td>
 			<td>
-				<a href="#" onclick="return showDetail(<?=$test['id']?>);"><?=tr("Details")?></a>
+				<a href="#" onclick="return showDetail('<?=$test['id']?>');"><?=tr("Details")?></a>
 			</td>
 		</tr>
 		<?php
@@ -204,12 +233,12 @@ function message_position($msg) {
 }
 
 
-function generate_report($the_test, $test_result) {
+function generate_report($test, $test_result) {
 	global $newlines, $statuses;
 	
 	if (!is_array($test_result) || !array_key_exists("status", $test_result)) {
 		$tmpfname = tempnam("/tmp/render-debug-data", "FOO");
-		file_put_contents($tmpfname, "INVALID OR CORRUPT TEST DATA:\n" . json_encode($the_test, JSON_PRETTY_PRINT) . "\n\n" . json_encode($test_result, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
+		file_put_contents($tmpfname, "INVALID OR CORRUPT TEST DATA:\n" . json_encode($test, JSON_PRETTY_PRINT) . "\n\n" . json_encode($test_result, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
 		return "INVALID OR CORRUPT TEST DATA";
 	}
 	
@@ -221,25 +250,35 @@ function generate_report($the_test, $test_result) {
 	$report = tr("TEST STATUS: ") . $status_text . "\n\n";
 	$raw = "";
 	
-	// Parser output
-	if ($test_result['status'] >= 200 && $test_result['status'] < 300) {
-		$pr = $test_result['tools']['parse'];
-		if ($pr['status'] != 2) $report .= $pr['message'] . "\n\n";
-		if ($pr['status'] == 3 || $pr['status'] == 4 || $pr['status'] == 5 || $pr['status'] == 8) {
-			$forbidden = substr($pr['message'], strrpos($pr['message'], " ") + 1);
-			// TODO show context
-		}
-		if ($pr['status'] == 2) {
-			$report .= "Starter code:\n\n<pre>" . str_replace("\\n", "reallybackslashen", htmlentities($the_test['parse']['starter_code'])) . "</pre>";
-		}
-	}
-	
 	if (!array_key_exists("tools", $test_result)) {
 		$tmpfname = tempnam("/tmp/render-debug-data", "FOO");
-		file_put_contents($tmpfname, "NO TOOLS:\n" . json_encode($the_test, JSON_PRETTY_PRINT) . "\n\n" . json_encode($test_result, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
+		file_put_contents($tmpfname, "NO TOOLS:\n" . json_encode($test, JSON_PRETTY_PRINT) . "\n\n" . json_encode($test_result, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
 		return $report;
 	}
 	
+	// Parser output
+	if ($test_result['status'] >= 200 && $test_result['status'] < 300) {
+		$pr = $test_result['tools']['parse'];
+		
+		if ($pr['status'] == STARTER_CODE_MODIFIED) {
+			$starterCode = "";
+			foreach($test['tools'] as $tool) {
+				if (is_array($tool) && array_key_exists('parse', $tool) && array_key_exists('starter_code', $tool['parse']))
+					$starterCode = $tool['parse']['starter_code'];
+			}
+			$report .= "Starter code:\n\n<pre>" . str_replace("\\n", "reallybackslashen", htmlentities($starterCode)) . "</pre>";
+		}
+		
+		else {
+			$report .= $pr['message'] . "\n\n";
+			if ($pr['status'] == FORBIDDEN_SUBSTRING || $pr['status'] == FORBIDDEN_ARRAY || $pr['status'] == FORBIDDEN_GLOBAL || $pr['status'] == FORBIDDEN_SYMBOL) {
+				$forbidden = substr($pr['message'], strrpos($pr['message'], " ") + 1);
+				// TODO show context
+			}
+		}
+	}
+	
+	// Debug
 	if (array_key_exists('debug', $test_result['tools'])) {
 		$dr = $test_result['tools']['debug'];
 		if (array_key_exists('parsed_output', $dr)) {
@@ -251,6 +290,7 @@ function generate_report($the_test, $test_result) {
 			$raw .= tr("DEBUGGER OUTPUT:") . "\n". $dr['output'] . "\n\n";
 	}
 
+	// Compile
 	$cr = [];
 	if (array_key_exists('compile', $test_result['tools']))
 		$cr = $test_result['tools']['compile'];
@@ -271,9 +311,9 @@ function generate_report($the_test, $test_result) {
 	if (array_key_exists('output', $cr) && !empty($cr['output']))
 		$raw .= tr("COMPILER OUTPUT:") . "\n" . $cr['output'] . "\n\n";
 
-	if (array_key_exists('profile[asan]', $test_result['tools']) && $test_result['tools']['profile[asan]']['status'] > 1)
+	if (array_key_exists('profile[asan]', $test_result['tools']) && $test_result['tools']['profile[asan]']['status'] != PROFILER_OK)
 		$pr = $test_result['tools']['profile[asan]'];
-	else if (array_key_exists('profile[memcheck]', $test_result['tools']) && $test_result['tools']['profile[memcheck]']['status'] > 1)
+	else if (array_key_exists('profile[memcheck]', $test_result['tools']) && $test_result['tools']['profile[memcheck]']['status'] != PROFILER_OK)
 		$pr = $test_result['tools']['profile[memcheck]'];
 	else if (array_key_exists('profile[sgcheck]', $test_result['tools']))
 		$pr = $test_result['tools']['profile[sgcheck]'];
@@ -299,7 +339,7 @@ function generate_report($the_test, $test_result) {
 			}
 		}
 	}
-	if (array_key_exists('output', $pr) && !empty($pr['output']) && $pr['status'] > 1)
+	if (array_key_exists('output', $pr) && !empty($pr['output']) && $pr['status'] != PROFILER_OK)
 		$raw .= tr("PROFILER OUTPUT:") . "\n". $pr['output'] . "\n\n";
 
 	$report .= "\n\n$raw";
@@ -310,56 +350,58 @@ function generate_report($the_test, $test_result) {
 }
 
 
-function show_test($task, $result, $test) {
+function show_test($task, $result, $testId) {
 	global $statuses;
 
 	// Colors
 	$input_color  = "#fcc";
 	$output_color = "#cfc";
-
+	$version = 3;
+	if (array_key_exists('version', $task)) $version = $task['version'];
 
 	
-	$the_test = null;
+	$test = null;
 	$test_no = 0;
 	foreach ($task['tests'] as $t) {
 		if (!array_key_exists('id', $t) || !array_key_exists($t['id'], $result['test_results'])) continue;
 		$test_no++;
-		if ($t['id'] == $test) { $the_test = $t; break; }
+		if ($t['id'] == $testId) { $test = $t; break; }
 	}
-	if ($the_test === null && $test == 1) {
-		foreach ($task['tests'] as $t) {
-			if (!array_key_exists('id', $t)) { $the_test = $t; break; }
-		}
+	if ($testId == 'prepare' && array_key_exists('prepare', $task)) {
+		$test = [ 'id' => 'prepare', 'options' => [ 'silent', 'terminate' ], 'tools' => $task['prepare'] ];
+		$test_no = tr("Pre-Test");
 	}
-	if ($the_test === null) {
+	
+	if ($test === null) {
 		?>
 		<p style="color: red; font-weight: bold"><?=tr("Illegal request")?></p>
-		<p><?php printf(tr("Test with id %d not found."), $test); ?></p>
+		<p><?php printf(tr("Test with id %d not found."), $testId); ?></p>
 		<?php
 		return;
 	}
 	
-	$test_result = $result['test_results'][$test];
+	$test_result = $result['test_results'][$testId];
 	
-	// Special case - parser error in zeroth test
-	if ($test_result['status'] == 2 && !array_key_exists('parse', $the_test)) {
-		foreach ($task['tests'] as $t) {
-			if (array_key_exists('parse', $t)) {
-				$the_test = $t;
-				break;
-			}
+	// Remap tools
+	$test_tools = [];
+	foreach ($test['tools'] as $tool) {
+		if (is_array($tool)) {
+			foreach($tool as $toolKey => $toolValue)
+				$test_tools[$toolKey] = $toolValue;
+		} else {
+			$test_tools[$tool] = [];
 		}
 	}
 
-	// Get detailed status text for parser errors
-	if ($test_result['status'] == 2) {
+	// Get detailed status text for parser and profiler errors
+	if ($test_result['status'] == TEST_SYMBOL_NOT_FOUND) {
 		foreach($test_result['tools'] as $key => $value)
-			if (substr($key, 0, 5) == "parse" && $value['status'] != 1)
+			if (substr($key, 0, 5) == "parse" && $value['status'] != PARSER_OK)
 				$test_result['status'] = 200 + $value['status'];
 	}
-	if ($test_result['status'] == 7) {
+	if ($test_result['status'] == TEST_PROFILER_ERROR) {
 		foreach($test_result['tools'] as $key => $value)
-			if (substr($key, 0, 7) == "profile" && $value['status'] != 1)
+			if (substr($key, 0, 7) == "profile" && $value['status'] != PROFILER_OK)
 				$test_result['status'] = 700 + $value['status'];
 	}
 
@@ -397,8 +439,8 @@ function show_test($task, $result, $test) {
 	<?php
 	
 	// Patch tool
-	if (array_key_exists('patch', $the_test))
-	foreach($the_test['patch'] as $patch) {
+	if (array_key_exists('patch', $test_tools))
+	foreach($test_tools['patch'] as $patch) {
 		if (!array_key_exists("position", $patch) || $patch['position'] == "main") {
 			?>
 			<h3><?=tr("Test code:")?></h3>
@@ -420,104 +462,106 @@ function show_test($task, $result, $test) {
 	}
 	
 	
-/*if ($status != "no_func") {
-	?>
-	<p><a href="<?=genuri()?>&amp;akcija=test_sa_kodom">Prikaži kod testa unutar zadaće</a></p>
-	<?
-}*/
-
-//if ($nastavnik)
-//	if ($sakriven == 1) print "<p>Test je sakriven (nije vidljiv studentima)</p>\n"; else print "<p>Test je javan (vidljiv studentima)</p>\n";
-
-	if (array_key_exists('execute', $the_test)) {
-	?>
-	<hr>
-	<h3><?=tr("Program input/output")?></h3>
-	<table border="0" cellspacing="5">
-	<?php
-	
-	if (array_key_exists('environment', $the_test['execute']) && array_key_exists('stdin', $the_test['execute']['environment'])) {
+	if (array_key_exists('execute', $test_tools)) {
+		$execute = $test_tools['execute'];
+		
 		?>
-		<tr><td><?=tr("Standard input:")?></td>
-		<td><code><?=escape_output($the_test['execute']['environment']['stdin'])?></code></td></tr>
+		<hr>
+		<h3><?=tr("Program input/output")?></h3>
+		<table border="0" cellspacing="5">
 		<?php
-	}
-	
-	if (array_key_exists('expect', $the_test['execute'])) {
-		$label_printed = false;
-		$exno = 0;
-		foreach ($the_test['execute']['expect'] as $expect) {
-			if (!$label_printed) {
-				print "<tr><td>" . tr("Expected output(s):") . "</td>";
-				$label_printed = true;
-			} else {
-				print "<tr><td>&nbsp;</td>";
-			}
-			
+		
+		if (array_key_exists('environment', $execute) && array_key_exists('stdin', $execute['environment'])) {
 			?>
-			<script>
-				expected[<?=$exno?>] = '<?=escape_javascript($expect)?>';
-			</script>
-			<td><span class="fail"><code><?=escape_output($expect)?></code></span></td></tr>
-			<tr><td>&nbsp;</td>
-			<td><a href="#" onclick="return showDiff(<?=$exno?>)" id="showDiffLink"><?=tr("Diff")?></a></td></tr>
+			<tr><td><?=tr("Standard input:")?></td>
+			<td><code><?=escape_output($execute['environment']['stdin'])?></code></td></tr>
 			<?php
-			
-			$exno++;
 		}
-	}
-
-	if (array_key_exists('fail', $the_test['execute'])) {
-		$label_printed = false;
-		foreach ($the_test['execute']['fail'] as $expect) {
-			if (!$label_printed) {
+		
+		if (array_key_exists('expect', $execute)) {
+			$label_printed = false;
+			$exno = 0;
+			foreach ($execute['expect'] as $expect) {
+				if (!$label_printed) {
+					?>
+					<tr><td><?=tr("Expected output(s):")?></td>
+					<?php
+					$label_printed = true;
+				} else {
+					?>
+					<tr><td>&nbsp;</td>
+					<?php
+				}
+				
 				?>
-				<tr><td><?=tr("Fail on output(s):")?></td>
-				<td><?=escape_output($expect)?></td></tr>
-				<?php
-			} else {
-				?>
+				<script>
+					expected[<?=$exno?>] = '<?=escape_javascript($expect)?>';
+				</script>
+				<td><span class="fail"><code><?=escape_output($expect)?></code></span></td></tr>
 				<tr><td>&nbsp;</td>
-				<td><?=escape_output($expect)?></td></tr>
+				<td><a href="#" onclick="return showDiff(<?=$exno?>)" id="showDiffLink"><?=tr("Diff")?></a></td></tr>
+				<?php
+				
+				$exno++;
+			}
+		}
+
+		if (array_key_exists('fail', $execute)) {
+			$label_printed = false;
+			foreach ($execute['fail'] as $expect) {
+				if (!$label_printed) {
+					?>
+					<tr><td><?=tr("Fail on output(s):")?></td>
+					<td><?=escape_output($expect)?></td></tr>
+					<?php
+				} else {
+					?>
+					<tr><td>&nbsp;</td>
+					<td><?=escape_output($expect)?></td></tr>
+					<?php
+				}
+			}
+		}
+		
+		if (array_key_exists('matching', $execute)) {
+			?>
+			<tr><td><?=tr("Matching type")?></td>
+			<td><?=$execute['matching']?></td></tr>
+			<?php
+		}
+		
+		if (array_key_exists('execute', $test_result['tools'])) {
+			$execute_result = $test_result['tools']['execute'];
+			
+			if (array_key_exists('output', $execute_result)) {
+				?>
+				<script>
+				var programOutput = '<?=escape_javascript($execute_result['output'])?>';
+				</script>
+				<tr><td><?=tr("Your program output:")?></td>
+				<td id="programOutput"><span class="success"><code><?=escape_output($execute_result['output'])?></code></span></td></tr>
+				<?php 
+			}
+			
+			if(array_key_exists('duration', $execute_result)) {
+				?>
+				<tr><td><?=tr("Execution time (rounded):")?></td>
+				<td><?=$execute_result['duration']?> <?=tr("seconds")?></td></tr>
 				<?php
 			}
 		}
-	}
-	
-	if (array_key_exists('matching', $the_test['execute'])) {
+		
+		
 		?>
-		<tr><td><?=tr("Matching type")?></td>
-		<td><?=$the_test['execute']['matching']?></td></tr>
+		</table>
 		<?php
-	}
-	
-	if (array_key_exists('execute', $test_result['tools']) && array_key_exists('output', $test_result['tools']['execute'])) {
-		?>
-		<script>
-		var programOutput = '<?=escape_javascript($test_result['tools']['execute']['output'])?>';
-		</script>
-		<tr><td><?=tr("Your program output:")?></td>
-		<td id="programOutput"><span class="success"><code><?=escape_output($test_result['tools']['execute']['output'])?></code></span></td></tr>
-		<?php 
-	}
-	
-	if(array_key_exists('execute', $test_result['tools']) && array_key_exists('duration', $test_result['tools']['execute'])) {
-		?>
-		<tr><td><?=tr("Execution time (rounded):")?></td>
-		<td><?=$test_result['tools']['execute']['duration']?> <?=tr("seconds")?></td></tr>
-		<?php
-	}
-	
-	?>
-	</table>
-	<?php
 
 	}
 	
 	?>
 	<hr>
 	<h3><?=tr("Test report:")?></h3>
-	<code><?=generate_report($the_test, $test_result)?></code>
+	<code><?=generate_report($test, $test_result)?></code>
 	<?php
 }
 
@@ -531,10 +575,32 @@ if(!isset($_REQUEST['task'])) {
 $task = json_decode($_REQUEST['task'], true);
 $result = json_decode($_REQUEST['result'], true);
 
-if (!isset($_REQUEST['test']) || intval($_REQUEST['test']) == 0)
+if (array_key_exists('version', $task) && $task['version'] == 2) {
+	$task_enc = htmlspecialchars(json_encode($task));
+	$result_enc = htmlspecialchars(json_encode($result));
+	$test = isset($_REQUEST['test']) ? $_REQUEST['test'] : "";
+	
+	?>
+	<form action="render_v2.php" method="POST" id="v2form">
+	<input type="hidden" name="language" value="<?=$language_id?>">
+	<input type="hidden" name="task" value="<?=$task_enc?>">
+	<input type="hidden" name="result" value="<?=$result_enc?>">
+	<input type="hidden" name="test" value="<?=$test?>">
+	<input type="submit" value=" Redirecting... ">
+	</form>
+	
+	<script>
+		setTimeout(function() { document.getElementById("v2form").submit(); }, 1000);
+	</script>
+
+	<?php
+	return;
+}
+
+if (!isset($_REQUEST['test']) || (intval($_REQUEST['test']) == 0 && $_REQUEST['test'] != 'prepare'))
 	show_table($task, $result);
 else
-	show_test($task, $result, intval($_REQUEST['test']));
+	show_test($task, $result, $_REQUEST['test']);
 exit(0);
 	
 

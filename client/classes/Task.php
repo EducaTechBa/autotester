@@ -2,7 +2,7 @@
 
 
 // AUTOTESTER - automated compiling, execution, debugging, testing and profiling
-// (c) Vedran Ljubovic and others 2014-2019.
+// (c) Vedran Ljubovic and others 2014-2023.
 //
 //     This program is free software: you can redistribute it and/or modify
 //     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,9 @@ require_once("classes/Test.php");
 require_once("tools/ExternalTool.php");
 
 class Task {
-	public $language = "", $zipFile = "", $taskDesc = array(), $tools = array(), $errMsg = "";
+	public const CURRENT_VERSION = 3;
+
+	public $version, $language = "", $zipFile = "", $taskDesc = array(), $tools = array(), $errMsg = "";
 	private $result;
 	public $afterEachTest = "", $lastTest = null;
 	
@@ -35,6 +37,12 @@ class Task {
 		if (!array_key_exists('name', $taskDesc)) $taskDesc['name'] = "";
 		$this->taskDesc = $taskDesc;
 		Utils::debugLog( "Task (" .$taskDesc['id'] . "): " . trim($taskDesc['name']) , 1 );
+		
+		// File version
+		if (array_key_exists('version', $taskDesc)) 
+			$this->version = $taskDesc['version'];
+		else
+			$this->version = self::CURRENT_VERSION;
 		
 		// Find tools
 		$found = false;
@@ -55,6 +63,14 @@ class Task {
 		if (!empty($program))
 			if (!$this->setProgram($program))
 				throw new Exception($this->errMsg);
+				
+		// Move prepare step to tests
+		if (array_key_exists('prepare', $taskDesc)) {
+			if (!array_key_exists('tests', $this->taskDesc))
+				$this->taskDesc['tests'] = [];
+			$prepareTest = [ 'id' => 'prepare', 'options' => [ 'silent', 'terminate' ], 'tools' => $taskDesc['prepare'] ];
+			array_unshift($this->taskDesc['tests'], $prepareTest);
+		}
 		
 		// No tests specified?
 		if (!array_key_exists('tests', $this->taskDesc))
@@ -237,8 +253,13 @@ class Task {
 				$this->result['tools'][$name] = $tool->getVersion();
 			
 		$this->runAllTests();
-		$this->result['test_results'] = $this->testResults;
-		$this->result['status'] = PROGRAM_FINISHED_TESTING;
+		if (array_key_exists('prepare', $this->testResults)) {
+			if ($this->testResults['prepare']['status'] == TEST_COMPILE_FAILED)
+				$this->result['status'] = PROGRAM_COMPILE_ERROR;
+		} else {
+			$this->result['test_results'] = $this->testResults;
+			$this->result['status'] = PROGRAM_FINISHED_TESTING;
+		}
 		return $this->result;
 	}
 }

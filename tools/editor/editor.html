@@ -1,0 +1,327 @@
+<html>
+<head>
+	<title>Autotester Editor</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<link rel="stylesheet" href="css/editor.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+	<link href="https://cdn.jsdelivr.net/bootstrap.tagsinput/0.8.0/bootstrap-tagsinput.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined">
+    
+	<script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.5/ace.js" type="text/javascript" charset="utf-8"></script>
+	<script src="https://cdn.jsdelivr.net/bootstrap.tagsinput/0.8.0/bootstrap-tagsinput.min.js"></script>
+	
+	<script src="js/autotester_features.js"></script>
+	<script src="js/editor.js"></script>
+</head>
+
+<body>
+<script>
+window.onload = function() { TaskEditor.initialize(); }
+</script>
+    <div id="content">
+        <div id="atConfig">
+            <form>
+                <div class="row">
+                    <label for="task_name" class="col-sm-2 col-form-label-sm">Task name</label>
+                    <div class="col-sm-5">
+                        <input type="text" id="task_name" class="form-control form-control-sm" placeholder="Task name" oninput="TaskEditor.taskNameChanged();">
+                    </div>                    
+                    <div class="form-group form-inline col-sm-3" style="padding: 0;">     
+                        <span style="color:green; display:none;" id="saveSuccessMessage">Saved</span>
+                    </div>
+                    <div class="col-sm-2">
+                        <button type="button" id="export-button" class="btn btn-success btn-sm float-right" onclick="TaskEditor.save()">Save &amp; Export</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <ul class="nav nav-tabs">
+            <li class="nav-item">
+                <a class="nav-link active" id="tsButton" data-toggle="tab" onclick="TaskEditor.openTab('simpleTab', 'general')">Simple</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="hafButton" data-toggle="tab" onclick="TaskEditor.openTab('advancedTab', 'general')">Advanced</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="hafButton" data-toggle="tab" onclick="TaskEditor.updateJsonTab(); TaskEditor.openTab('jsonTab', 'general');">JSON</a>
+            </li>
+        </ul>
+        <div class="tab-content">
+            <!-- Tab with all test specifications -->
+            <div id="simpleTab" class="row tab-pane active" style="display: flex">
+                <div class="col-md-2">
+                    <!--List header-->
+                    <div class="row justify-content-between" style="font-size: 16px; border-bottom: 1px solid #ccc; margin-bottom: 10px;">
+                        <label style="vertical-align:text-bottom">Tests</label>
+                        <i class="material-icons float-right" onclick="TaskEditor.addTest()">add_circle_outline</i>
+                    </div>
+                    <div class="row" id="at_warning" style="display: none;">
+                        <label>There are no tests defined<br>for this task.</label>
+                    </div>
+                    <!--Autotest list content-->
+                    <div id="atList">
+                    </div>
+                    <div id="atListTemplate" style="display:none">
+                        <div class="row justify-content-between ADDCLASS" id="at_ATID">
+                            <label class="col-form-label-sm" onclick="TaskEditor.showTest(ATID)">ATNAME</label>
+                            <div>
+                                <i class="material-icons float-right" onclick="TaskEditor.moveUpTest(ATID)" id="at_up_control_ATID">keyboard_control_key</i>
+                                <i class="material-icons float-right" onclick="TaskEditor.deleteTest(ATID)">delete_forever</i>
+                                <i class="material-icons float-right" onclick="TaskEditor.showTest(ATID)">edit</i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-10 col-md-offset-2" id="atPreview" style="display: none;">
+                    <form>
+                        <div class="row">
+                            <label for="at_name" class="col-sm-2 col-form-label-sm">Name</label>
+                            <div class="col-sm-2">
+                                <input type="text" id="at_name" class="form-control form-control-sm" placeholder="Test name" oninput="TaskEditor.testNameChanged(false)">
+                            </div>
+                            <div class="col-sm-6"></div>
+                        </div>
+                        <div class="row">
+                            <label for="description" class="col-sm-2 col-form-label-sm">Description</label>
+                            <div class="col-sm-10">
+                                <textarea id="description" class="form-control form-control-sm" rows="1" placeholder="Test description" oninput="TaskEditor.fieldChanged(event, false)"></textarea>
+                            </div>
+                        </div> 
+                        <div class="row">
+                            <label for="stdin" class="col-sm-2 col-form-label-sm">Input</label>
+                            <div class="col-sm-10">
+                                <textarea id="stdin" class="form-control form-control-sm code-input" rows="4" placeholder="Input" oninput="TaskEditor.fieldChanged(event, false)"></textarea>
+                            </div>
+                        </div> 
+                        <div class="row">
+                            <div class="col-sm-2">
+                                <label>Expected Output</label>
+                                <i class="material-icons float-right" onclick="TaskEditor.addOutputVariant()">add_circle_outline</i>
+                            </div>
+                            <div class="col-sm-10"> </div>
+                        </div>
+                        <div id="expected_output_variants_template" style="display: none;">
+                            <div class="row">
+                                <div id="label_div_v_ORD" class="col-sm-2"> 
+                                    <label for="variant_ORD" class="col-form-label-sm">Variant ORD</label>
+                                </div>
+                                <div id="text_div_v_ORD" class="col-sm-10">
+                                    <textarea id="variant_ORD" class="form-control form-control-sm code-input" rows="4" placeholder="Expected Output (Variant ORD)" oninput="TaskEditor.fieldChanged(event, false)">CODE</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="expected_output_variants">
+                        </div>
+                        
+                        <div id="patchToolAvailableRow" style="display: none">
+                        <div class="row">
+                            <div class="col-sm-2">
+                                <label>Patches</label>
+                                <i class="material-icons float-right" onclick="TaskEditor.addPatch()">add_circle_outline</i>
+                            </div>
+                            <div class="col-sm-10"> </div>
+                        </div>
+                        <div id="patches_template" style="display: none;">
+                            <div class="row">
+                                <div id="label_patch_v_ORD" class="col-sm-2"> 
+                                    <label for="patch_code_ORD" class="col-form-label-sm">Code</label>
+                                </div>
+                                <div id="text_patch_v_ORD" class="col-sm-10" style="margin-bottom: 10px;">
+                                    <textarea id="patch_code_ORD" class="form-control form-control-sm code-input" rows="4" placeholder="Patch Code ORD" oninput="TaskEditor.fieldChanged(event, false)">CODE</textarea>
+                                </div>
+                                <div id="label_ppos_v_ORD" class="col-sm-2"> 
+                                    <label for="patch_pos_ORD" class="col-form-label-sm">Position</label>
+                                </div>
+                                <div id="text_ppos_v_ORD" class="col-sm-10">
+                                    <select class="form-control form-control-sm" id="patch_pos_ORD" oninput="TaskEditor.fieldChanged(event, false)">
+                                        <option value="" selected="" disabled="" hidden="">Select Position</option>
+                                        <option value="main" id="main">Main</option>
+                                        <option value="above_main" id="above_main">Above main</option>
+                                        <option value="above_main_class" id="above_main_class">Above main class</option>
+                                        <option value="top_of_file" id="top_of_file">Top of file</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="patches">
+                        </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- Header Advanced Features Tab -->
+            <div class="tab-pane fade" id="advancedTab" style="display: none">
+                <div class="col-md-2">
+                    <div class="row justify-content-between" style="font-size: 16px; margin-bottom: 10px;" onclick="TaskEditor.openTab('commonAdvanced', 'advancedMenu')">
+                        <label style="vertical-align:text-bottom">Common options</label>
+                    </div>
+                    <div class="row justify-content-between" style="font-size: 16px; margin-bottom: 10px;" onclick="TaskEditor.openTab('prepareAdvanced', 'advancedMenu')">
+                        <label style="vertical-align:text-bottom">Prepare</label>
+                    </div>
+                    <!--List header-->
+                    <div class="row justify-content-between" style="font-size: 16px; border-bottom: 1px solid #ccc; margin-bottom: 10px;">
+                        <label style="vertical-align:text-bottom">Tests</label>
+                        <i class="material-icons float-right" onclick="TaskEditor.addTest()">add_circle_outline</i>
+                    </div>
+                    <div class="row" id="atWarningAdvanced" style="display: none;">
+                        <label>There are no tests defined<br>for this task.</label>
+                    </div>
+                    <!--Autotest list content-->
+                    <div id="atListAdvanced">
+                    </div>
+                </div>
+
+                <div class="col-md-10 col-md-offset-2" id="advancedTarget">
+                    <div id="commonAdvanced" class="col-md-10 col-md-offset-2" style="display: none">
+                        <form>
+                            <div class="row">
+                                <h3 class="col-sm-10">General autotester task options</h3>
+                            </div>
+                            <div class="row">
+                                <label for="task_id" class="col-sm-2 col-form-label-sm">Task ID</label>
+                                <div class="col-sm-2">
+                                    <input type="text" id="task_id" class="form-control form-control-sm" placeholder="Task ID" oninput="TaskEditor.fieldChanged(event, true)">
+                                </div>
+                                <div class="col-sm-6"></div>
+                            </div>
+                            <div class="row">
+                                <label for="languages" class="col-sm-2 col-form-label-sm">Languages</label>
+                                <div class="col-sm-6">
+                                    <input type="text" id="languages" class="form-control form-control-sm" data-role="tagsinput" onchange="TaskEditor.languagesChanged();">
+                                    <p style="color: red; display: none" id="languagesWarning">Language list can't be empty</p>
+                                </div>
+                                <div class="col-sm-2">
+                                    <button type="button" id="json_apply_button" class="btn btn-light btn-sm dropdown-toggle" id="addLanguageButton" data-toggle="dropdown"><i class="material-icons" style="font-size: 12px">add</i> Add language</button>
+                                    <div class="dropdown-menu" aria-labelledby="addLanguageButton" id="supportedLanguages">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label for="languages" class="col-sm-2 col-form-label-sm">Tools</label>
+                                <div class="col-sm-10" id="toolsGeneral">
+                                </div>
+                            </div>
+                            <div id="toolIconTemplate" style="display: none">
+                                <button class="toolIcon" id="TOOLID">
+                                    <div class="material-icons-outlined" style="font-size: 40px">TOOLICON</div>
+                                    <div class="toolIconName">TOOLNAME</div>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <div id="prepareAdvanced" style="display: none">
+                       <form>
+                            <div class="row">
+                                <h3 class="col-sm-10">Prepare (pre-test) stage</h3>
+                            </div>
+                            <div class="row">
+                                <label for="languages" class="col-sm-2 col-form-label-sm">Tools</label>
+                                <div class="col-sm-10" id="toolsPrepare">
+                                    
+                                </div>
+                               <div class="dropdown-menu" aria-labelledby="toolsTest_add_tool" id="supportedToolsPrepare">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div id="atPreviewAdvanced" style="display: none">
+                        <form>
+                            <div class="row">
+                                <h3 class="col-sm-10">Test options</h3>
+                            </div>
+                            <div class="row">
+                                <label for="adv_at_id" class="col-sm-2 col-form-label-sm">ID</label>
+                                <div class="col-sm-2">
+                                    <input type="text" id="adv_at_id" class="form-control form-control-sm" placeholder="Test ID">
+                                </div>
+                                <div class="col-sm-6"></div>
+                            </div>
+                            <div class="row">
+                                <label for="adv_at_name" class="col-sm-2 col-form-label-sm">Name</label>
+                                <div class="col-sm-2">
+                                    <input type="text" id="adv_at_name" class="form-control form-control-sm" placeholder="Test name" oninput="TaskEditor.testNameChanged(true)">
+                                </div>
+                                <div class="col-sm-6"></div>
+                            </div>
+                            <div class="row">
+                                <label for="adv_at_description" class="col-sm-2 col-form-label-sm">Description</label>
+                                <div class="col-sm-10">
+                                    <textarea id="adv_at_description" class="form-control form-control-sm" rows="1" placeholder="Test description" oninput="TaskEditor.fieldChanged(event, false)"></textarea>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label for="adv_at_options" class="col-sm-2 col-form-label-sm">Options</label>
+                                <div class="col-sm-6">
+                                    <input type="text" id="adv_at_options" class="form-control form-control-sm" data-role="tagsinput" onchange="TaskEditor.testOptionsChanged();">
+                                </div>
+                                <div class="col-sm-2">
+                                    <button type="button" class="btn btn-light btn-sm dropdown-toggle" id="addOptionButton" data-toggle="dropdown"><i class="material-icons" style="font-size: 12px">add</i> Add option</button>
+                                    <div class="dropdown-menu" aria-labelledby="addOptionButton" id="supportedOptions">
+                                        <a class="dropdown-item" onclick="$('#adv_at_options').tagsinput('add', 'nodetail');">nodetail (Show only success/failure)</a>
+                                        <a class="dropdown-item" onclick="$('#adv_at_options').tagsinput('add', 'silent');">silent (Don't show at all if successful)</a>
+                                        <a class="dropdown-item" onclick="$('#adv_at_options').tagsinput('add', 'terminate');">terminate (Stop testing if this test fails)</a>
+                                        <a class="dropdown-item" onclick="$('#adv_at_options').tagsinput('add', 'reuse');">reuse (Don't delete folder)</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row" style="margin-bottom: 10px">
+                                <label for="languages" class="col-sm-2 col-form-label-sm">Tools</label>
+                                <div class="col-sm-10" id="toolsTest">
+                                    
+                                </div>
+                                <div class="dropdown-menu" aria-labelledby="toolsTest_add_tool" id="supportedTools">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label for="adv_weight" class="col-sm-2 col-form-label-sm">Weight</label>
+                                <div class="col-sm-2">
+                                    <input type="text" id="adv_weight" class="form-control form-control-sm" placeholder="Weight" oninput="TaskEditor.fieldChanged(event, true)">
+                                </div>
+                                <label for="adv_points" class="col-sm-2 col-form-label-sm">Points</label>
+                                <div class="col-sm-2">
+                                    <input type="text" id="adv_points" class="form-control form-control-sm" placeholder="Points" oninput="TaskEditor.fieldChanged(event, true)">
+                                </div>
+                            </div> 
+                        </form>
+                    </div>
+                    <div id="descriptionAdvanced" style="display: block">
+                       <p>Before using Advanced mode, please read <a href="https://raw.githubusercontent.com/etf-sarajevo/autotester/master/client/tutorial.txt" target="_blank">Tutorial on Autotester task description format</a>.
+                    </div>
+                </div>
+            </div>
+            <div id="jsonTab" class="row tab-pane active" style="display: none">
+                <div style="height: 40px" class="row">
+                    <div class="col-sm-2">
+                        <button type="button" id="json_apply_button" class="btn btn-success btn-sm float-right" onclick="TaskEditor.jsonChanged()">Apply Changes</button>
+                    </div>
+                    <div class="col-sm-8">
+                        <div id="json_error_display" style="color: red; font-weight: bold; display: none">There are errors in your JSON code. Changes not applied</div>
+                    </div>
+                </div>
+                <div id="json_editor" style="width: 100%; height: 100%"></div>
+            </div>
+            <div id="templateChooser" class="row tab-pane active" style="display: none">
+                <div style="margin-left: 50px;">
+                    <h3 class="col-sm-10">Choose a template</h3>
+                    <p><select id="knownTemplates"></select></p>
+                    <button type="button" class="btn btn-success" onclick="TaskEditor.loadTemplate()">Load</button>
+                </div>
+            </div>
+        </div>  
+    </div>
+    
+
+
+
+
+
+
+
+
+            
+
+            
+</body></html>

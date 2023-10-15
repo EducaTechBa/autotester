@@ -1,0 +1,26 @@
+{
+    "id": 5444,
+    "name": "Python3 Task Template",
+    "version": "3",
+    "languages": [ "Python" ],
+    "tools" : {
+        "compile" : {
+            "version": "3+"
+        }, 
+        "execute" : {
+            "environment" : {
+                "timeout" : 10,
+                "memory" : 1000000
+            },
+            "version": "3+"
+        }
+    },
+    "tests": [
+    ],
+    "testTemplate": {
+        "tools": [
+            "compile",
+            "execute"
+        ]
+    }
+}

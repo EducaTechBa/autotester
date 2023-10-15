@@ -162,7 +162,7 @@ class CCpp extends Language {
 			if (array_key_exists("starter_code", $options)) {
 				$blocks = $this->findStarterCode($content, $options['starter_code']);
 				if ($blocks === false)
-					return array( "success" => false, "message" => "Starter code is modified", "status" => 2 );
+					return array( "success" => false, "message" => "Starter code is modified", "status" => STARTER_CODE_MODIFIED );
 			}
 			$this->symbols[$file] = $this->parse_c_cpp( $content, $this->language, basename($file) );
 			
@@ -179,17 +179,17 @@ class CCpp extends Language {
 			if (array_key_exists("ban_substrings", $options))
 				foreach($options['ban_substrings'] as $substring)
 					if (self::in_blocks($blocks, strpos($content, $substring)))
-						return array( "success" => false, "message" => "Found forbidden substring $substring", "status" => 3 );
+						return array( "success" => false, "message" => "Found forbidden substring $substring", "status" => FORBIDDEN_SUBSTRING );
 			
 			if (array_key_exists("ban_arrays", $options))
 				foreach($this->symbols[$file] as $symbol)
 					if (self::in_blocks($blocks, $symbol['pos']) && ($symbol['type'] == "array" || strstr($symbol['type'], "[]")))
-						return array( "success" => false, "message" => "Found forbidden array " . $symbol['name'], "status" => 4 );
+						return array( "success" => false, "message" => "Found forbidden array " . $symbol['name'], "status" => FORBIDDEN_ARRAY );
 			
 			if (array_key_exists("ban_globals", $options))
 				foreach($this->symbols[$file] as $symbol)
 					if (self::in_blocks($blocks, $symbol['pos']) && ($symbol['type'] == "array" || $symbol['type'] == "identifier") && !array_key_exists('parent', $symbol))
-						return array( "success" => false, "message" => "Found forbidden global variable " . $symbol['name'], "status" => 5 );
+						return array( "success" => false, "message" => "Found forbidden global variable " . $symbol['name'], "status" => FORBIDDEN_GLOBAL );
 			
 			if (array_key_exists("replace_substrings", $options)) {
 				foreach($options['replace_substrings'] as $search => $replace)
@@ -221,24 +221,24 @@ class CCpp extends Language {
 		if (array_key_exists("require_substrings", $options))
 			foreach($options['require_substrings'] as $substring)
 				if (!array_key_exists($substring, $found_subst))
-					return array( "success" => false, "message" => "Couldn't find substring $substring", "symbols" => $all_symbols, "status" => 6 );
+					return array( "success" => false, "message" => "Couldn't find substring $substring", "symbols" => $all_symbols, "status" => MISSING_SUBSTRING );
 		
 		if (array_key_exists("require_symbols", $options))
 			foreach($options['require_symbols'] as $symbol)
 				if (!in_array($symbol, $all_symbols))
-					return array( "success" => false, "message" => "Couldn't find symbol $symbol", "symbols" => $all_symbols, "status" => 7 );
+					return array( "success" => false, "message" => "Couldn't find symbol $symbol", "symbols" => $all_symbols, "status" => MISSING_SYMBOL );
 					
 		if (array_key_exists("ban_symbols", $options))
 			foreach($options['ban_symbols'] as $symbol)
 				if (in_array($symbol, $all_symbols))
-					return array( "success" => false, "message" => "Found forbidden symbol $symbol", "symbols" => $all_symbols, "status" => 8 );
+					return array( "success" => false, "message" => "Found forbidden symbol $symbol", "symbols" => $all_symbols, "status" => FORBIDDEN_SYMBOL );
 		
 		// Remove paths from symbols array
 		$symbols_return = [];
 		foreach($this->symbols as $key => $value)
 			$symbols_return[basename($key)] = $value;
 		
-		return array( "success" => true, "symbols" => $symbols_return, "status" => 1 );
+		return array( "success" => true, "symbols" => $symbols_return, "status" => PARSER_OK );
 	}
 	
 	
