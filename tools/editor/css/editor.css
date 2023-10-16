@@ -32,6 +32,14 @@ textarea {
     padding-top:15px;
 }
 
+.menuClickable {
+    background: #fff;
+}
+
+.menuClickable:hover {
+    background: #f9f9f9;
+}
+
 .currentTest {
     background: #eee;
 }

@@ -155,10 +155,10 @@ window.onload = function() { TaskEditor.initialize(); }
             <!-- Header Advanced Features Tab -->
             <div class="tab-pane fade" id="advancedTab" style="display: none">
                 <div class="col-md-2">
-                    <div class="row justify-content-between" style="font-size: 16px; margin-bottom: 10px;" onclick="TaskEditor.openTab('commonAdvanced', 'advancedMenu')">
+                    <div class="row justify-content-between menuClickable" style="font-size: 16px; margin-bottom: 10px;" onclick="TaskEditor.openTab('commonAdvanced', 'advancedMenu')">
                         <label style="vertical-align:text-bottom">Common options</label>
                     </div>
-                    <div class="row justify-content-between" style="font-size: 16px; margin-bottom: 10px;" onclick="TaskEditor.openTab('prepareAdvanced', 'advancedMenu')">
+                    <div class="row justify-content-between menuClickable" style="font-size: 16px; margin-bottom: 10px;" onclick="TaskEditor.openTab('prepareAdvanced', 'advancedMenu')">
                         <label style="vertical-align:text-bottom">Prepare</label>
                     </div>
                     <!--List header-->
@@ -205,7 +205,7 @@ window.onload = function() { TaskEditor.initialize(); }
                                 </div>
                             </div>
                             <div id="toolIconTemplate" style="display: none">
-                                <button class="toolIcon" id="TOOLID">
+                                <button type="button" class="toolIcon" id="TOOLID" onclick="console.log('hello');">
                                     <div class="material-icons-outlined" style="font-size: 40px">TOOLICON</div>
                                     <div class="toolIconName">TOOLNAME</div>
                                 </button>

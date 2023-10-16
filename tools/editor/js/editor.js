@@ -283,7 +283,7 @@ const TaskEditor = (() => {
 			let name = test.hasOwnProperty('name') ? test.name : "Test " + (i+1);
 			if (firstId == 0) firstId = id;
 			if (id > maxId) maxId = id;
-			let addClass = '';
+			let addClass = 'menuClickable';
 			if (id == currentTestId) {
 				currentTest = test;
 				addClass = 'currentTest';
