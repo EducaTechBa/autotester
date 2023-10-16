@@ -9,6 +9,7 @@ const TaskEditor = (() => {
 	var dirty;
 	var jsonEditor;
 	var taskLanguage;
+	var saveCallback;
 	
 	const initialize = () => {
 		let autotestTemplate = null, autotestContent = null;
@@ -55,6 +56,11 @@ const TaskEditor = (() => {
 				templateChooser.add(newOption, undefined);
 			}
 			openTab('templateChooser', 'general')
+		}
+		
+		saveCallback = null;
+		if (window.localStorage.getItem('.autotest-save-callback')) {
+			saveCallback = window.localStorage.getItem('.autotest-save-callback');
 		}
 	}
 	
@@ -180,11 +186,16 @@ const TaskEditor = (() => {
 
 	const save = () => {
 		cleanup();
-		console.log(JSON.stringify(task, null, 4));
+		//console.log(JSON.stringify(task, null, 4));
 		window.localStorage.setItem('.autotest-content', JSON.stringify(task, null, 4))
 		dirty = false;
 		document.getElementById('saveSuccessMessage').style.display = 'block';
 		setTimeout(function() { document.getElementById('saveSuccessMessage').style.display = 'none'; }, 2000);
+		if (saveCallback != null) {
+			window.opener[saveCallback]();
+		} else if (globalSaveCallback != null) {
+			globalSaveCallback();
+		}
 	}
 	
 	const checkUnsaved = () => {

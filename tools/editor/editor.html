@@ -19,7 +19,10 @@
 
 <body>
 <script>
-window.onload = function() { TaskEditor.initialize(); }
+globalSaveCallback = null;
+window.onload = function() { 
+    TaskEditor.initialize(); 
+}
 </script>
     <div id="content">
         <div id="atConfig">
