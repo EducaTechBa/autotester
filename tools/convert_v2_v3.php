@@ -31,7 +31,6 @@ foreach($taskDesc['tests'] as $i => &$test) {
 	
 	if (is_prepare($newTest) && !array_key_exists('prepare', $taskDesc)) {
 		$taskDesc['prepare'] = $newTest['tools'];
-		print "Unsetting $i\n";
 		unset($taskDesc['tests'][$i]);
 	} else
 		$test = $newTest;
