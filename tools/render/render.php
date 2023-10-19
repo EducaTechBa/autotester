@@ -575,6 +575,15 @@ if(!isset($_REQUEST['task'])) {
 $task = json_decode($_REQUEST['task'], true);
 $result = json_decode($_REQUEST['result'], true);
 
+// Detect version 2
+if (!array_key_exists('version', $task)) {
+	$task['version'] = 2;
+	if (array_key_exists('tests', $task)) foreach ($task['tests'] as $test) {
+		if (array_key_exists('tools', $test))
+			$task['version'] = 3;
+	}
+}
+
 if (array_key_exists('version', $task) && $task['version'] == 2) {
 	$task_enc = htmlspecialchars(json_encode($task));
 	$result_enc = htmlspecialchars(json_encode($result));
