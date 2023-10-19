@@ -384,7 +384,7 @@ function show_test($task, $result, $testId) {
 	
 	// Remap tools
 	$test_tools = [];
-	foreach ($test['tools'] as $tool) {
+	if (array_key_exists('tools', $test)) foreach ($test['tools'] as $tool) {
 		if (is_array($tool)) {
 			foreach($tool as $toolKey => $toolValue)
 				$test_tools[$toolKey] = $toolValue;

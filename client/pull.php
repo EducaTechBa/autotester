@@ -21,7 +21,7 @@
 
 
 if (!file_exists("classes/Config.php")) {
-	echo "First you need to copy config.php.default to config.php and edit it.\n";
+	echo "First you need to copy Config.php.default to Config.php and edit it.\n";
 	exit(1);
 }
 require_once("classes/Config.php");
@@ -38,7 +38,7 @@ pcntl_signal(SIGHUP, 'signalHandler');
 
 
 // Command line params 
-echo "AUTOTESTER pull.php\nCopyright (c) 2014-2019 Vedran Ljubović\nElektrotehnički fakultet Sarajevo\nLicensed under GNU GPL v3\n\n";
+echo "AUTOTESTER pull.php\nCopyright (c) 2014-2023 Vedran Ljubović\nElektrotehnički fakultet Sarajevo\nLicensed under GNU GPL v3\n\n";
 
 $taskid = $progid = $wait_secs = 0;
 $hibernate = false;
