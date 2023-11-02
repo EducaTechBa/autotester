@@ -2,7 +2,7 @@
 
 
 // AUTOTESTER - automated compiling, execution, debugging, testing and profiling
-// (c) Vedran Ljubovic and others 2014-2021.
+// (c) Vedran Ljubovic and others 2014-2023.
 //
 //     This program is free software: you can redistribute it and/or modify
 //     it under the terms of the GNU General Public License as published by
@@ -300,8 +300,7 @@ function ws_parse_arguments() {
 		$result = $program->getResult();
 		if (array_key_exists('status', $result) && $result['status'] == PROGRAM_AWAITING_TESTS) {
 			$queue = new Queue;
-			$stats = $queue->getStats();
-			$result['queue_items'] = $stats['queued'];
+			$result['queue_items'] = $queue->getProgramPosition($program->id);
 		}
 		
 		return array( "success" => true, "data" => $result );

@@ -2,7 +2,7 @@
 
 
 // AUTOTESTER - automated compiling, execution, debugging, testing and profiling
-// (c) Vedran Ljubovic and others 2014-2021.
+// (c) Vedran Ljubovic and others 2014-2023.
 //
 //     This program is free software: you can redistribute it and/or modify
 //     it under the terms of the GNU General Public License as published by
@@ -350,6 +350,17 @@ class Queue {
 	// Lightweight stats
 	public function getStats() {
 		return array( "queued" => count($this->queue), "assigned" => count($this->assigned), "finished" => count($this->finished), "rejected" => count($this->rejected) );
+	}
+	
+	// Lightweight stats
+	public function getProgramPosition($programId) {
+		$i = 1;
+		foreach($this->queue as $item) {
+			if ($item['program'] == $programId)
+				return $i;
+			$i++;
+		}
+		return $i;
 	}
 	
 	// Remove old programs from queue (and filesystem) ($age is seconds from now)
