@@ -2,7 +2,7 @@
 
 
 // AUTOTESTER - automated compiling, execution, debugging, testing and profiling
-// (c) Vedran Ljubovic and others 2014-2021.
+// (c) Vedran Ljubovic and others 2014-2023.
 //
 //     This program is free software: you can redistribute it and/or modify
 //     it under the terms of the GNU General Public License as published by
@@ -76,11 +76,16 @@ class Program {
 			$oldData = explode("\n", trim(`$conf_unzip_command -vl $zippath`));
 			$newData = explode("\n", trim(`$conf_unzip_command -vl $file`));
 			if (count($oldData) == count($newData)) {
-				$same = true;
+				$oldmap = $newmap = [];
 				for ($i = 2; $i < count($oldData) - 2; $i++) {
-					$oldCrc = explode(" ", trim(preg_replace("/\s+/", " ", $oldData[$i])))[6];
-					$newCrc = explode(" ", trim(preg_replace("/\s+/", " ", $newData[$i])))[6];
-					if ($oldCrc != $newCrc) $same = false;
+					$parts = explode(" ", trim(preg_replace("/\s+/", " ", $oldData[$i])));
+					$oldmap[$parts[7]] = $parts[6];
+					$parts = explode(" ", trim(preg_replace("/\s+/", " ", $newData[$i])));
+					$newmap[$parts[7]] = $parts[6];
+				}
+				$same = true;
+				foreach($oldmap as $key => $value) {
+					if ($newmap[$key] != $value) $same = false;
 				}
 			}
 		}
