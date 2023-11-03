@@ -362,7 +362,7 @@ function show_test($task, $result, $testId) {
 	
 	$test = null;
 	$test_no = 0;
-	foreach ($task['tests'] as $t) {
+	if (is_array($result) && array_key_exists('test_results', $result)) foreach ($task['tests'] as $t) {
 		if (!array_key_exists('id', $t) || !array_key_exists($t['id'], $result['test_results'])) continue;
 		$test_no++;
 		if ($t['id'] == $testId) { $test = $t; break; }
