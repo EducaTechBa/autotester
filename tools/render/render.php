@@ -23,7 +23,7 @@ require("status_codes.php");
 
 if (isset($_REQUEST['language'])) {
 	$language_id = basename($_REQUEST['language']);
-	if (!empty($language_id) && !preg_match("/\W/", $language_id))
+	if (!empty($language_id) && !preg_match("/\W/", $language_id) && $language_id != "en")
 		require("l10n/$language_id.php");
 }
 
