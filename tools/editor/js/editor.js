@@ -8,6 +8,7 @@ const TaskEditor = (() => {
 	var currentTest;
 	var dirty;
 	var jsonEditor;
+	var mainEditor;
 	var taskLanguage;
 	var saveCallback;
 	
@@ -714,11 +715,11 @@ const TaskEditor = (() => {
 	
 	const openTab = (tabName, panel) => {
 		let tabs = { 
-			"general" : [ 'simpleTab', 'advancedTab', 'jsonTab', 'templateChooser' ],
+			"general" : [ 'simpleTab', 'advancedTab', 'jsonTab', 'testTab', 'templateChooser' ],
 			"advancedMenu" : [ 'commonAdvanced', 'prepareAdvanced', 'atPreviewAdvanced', 'descriptionAdvanced' ]
 		};
 		let defaultStyle = { 
-			"general" : [ 'flex', 'flex', 'block', 'block' ],
+			"general" : [ 'flex', 'flex', 'block', 'flex', 'block' ],
 			"advancedMenu" : [ 'block', 'block', 'block', 'block' ]
 		};
 		
@@ -751,6 +752,53 @@ const TaskEditor = (() => {
 		jsonEditor.setValue(code);
 		jsonEditor.scrollToLine(1, true, true, function () {});
 		jsonEditor.gotoLine(1); 
+	}
+	
+	
+	const initializeMainCode = () => {
+		if (!mainEditor) {
+			mainEditor = ace.edit("test_main_editor");
+			let languageChooser = document.getElementById('testLanguages');
+
+			let file = '', mode = '';
+			for (let i in task.languages) {
+				if (task.languages[i] == "C") {
+					file = "hello.c";
+					mode = "ace/mode/c_cpp";
+				} else if (task.languages[i] == "C++") {
+					file = "hello.cpp";
+					mode = "ace/mode/c_cpp";
+				} else if (task.languages[i] == "Python") {
+					file = "hello.py";
+					mode = "ace/mode/python";
+				} else if (task.languages[i] == "Java") {
+					file = "hello.java";
+					mode = "ace/mode/java";
+				} else if (task.languages[i] == "Matlab") {
+					file = "hello.m";
+					mode = "ace/mode/c_cpp";
+				}
+
+				let newOption = new Option(task.languages[i], task.languages[i]);
+				languageChooser.add(newOption, undefined);
+			}
+
+			if (file == '') {
+				file = "hello.c";
+				mode = "ace/mode/c";
+			}
+
+			$.ajax({
+				url: "hello/" + file,
+				dataType: 'text',
+				success: function(result) {
+					mainEditor.getSession().setMode(mode);
+					mainEditor.setValue(result);
+					mainEditor.scrollToLine(1, true, true, function () {});
+					mainEditor.gotoLine(1); 
+				}
+			});
+		}
 	}
 	
 	const showTest = (testId) => {
@@ -850,9 +898,70 @@ const TaskEditor = (() => {
 		dirty = true;
 		render();
 	}
-	
-	
-	
+
+	const runTests = async () => {
+		document.getElementById('testResultsList').innerHTML = '';
+		let testResultTemplateHtml = document.getElementById('testResultsTemplate').innerHTML;
+		let language = document.getElementById('testLanguages').value;
+
+		AutotesterService.setRequestName("Autotester editor try " + Math.random().toString(36).slice(2, 7));
+		AutotesterService.setRequestLanguage(language);
+		AutotesterService.setAutotestData(task);
+		AutotesterService.setShowMsgCallback(function(msg) {
+			let label = document.getElementById('testingStatus');
+			label.style.display = 'block';
+			label.children[0].innerHTML = msg;
+		});
+		AutotesterService.setTestingCompleteCallback(function() {
+			let testStatusLabel = [ "", "Ok", "Parser error", "Doesn't compile", "Timeout", "Crash", "Wrong output", "Profiler error", "Output not found", "Exception" ];
+
+			let resultData = AutotesterService.getResultData();
+			let resultHtml = '';
+			if (resultData.hasOwnProperty('test_results')) {
+				let label = document.getElementById('testingStatus');
+				label.style.display = 'none';
+
+				let testResults = resultData.test_results;
+				for(let testId in testResults) {
+					let text = testStatusLabel[testResults[testId].status];
+					let icon = 'done';
+					if (testResults[testId].status != 1) icon = 'close';
+					resultHtml += testResultTemplateHtml.replaceAll("ATID", testId).replaceAll("ATTEXT", text).replaceAll("ATICON", icon);
+				}
+				document.getElementById('testResultsList').innerHTML = resultHtml;
+			}
+
+		});
+
+		let filename = 'test.c';
+		if (language == 'C') filename = 'test.c';
+		if (language == 'C++') filename = 'test.cpp';
+
+        const zip = new JSZip();
+		zip.file(filename, mainEditor.getSession().getValue());
+        const content = await zip.generateAsync({
+            type: 'blob',
+            compression: 'DEFLATE',
+            compressionOptions: { level: 9 }
+        });
+
+		AutotesterService.setProgramFileContent(content);
+
+		AutotesterService.runTests();
+	}
+
+	const showTestResult = (testId) => {
+		console.log("showTestResult");
+		let form = document.getElementById('showTestResultForm');
+		form.task.value = JSON.stringify(AutotesterService.getAutotestData());
+		form.result.value = JSON.stringify(AutotesterService.getResultData());
+		form.test.value = testId;
+		window.open('about:blank','Popup_Window','toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=0,width=700,height=700,left=312,top=234');
+		form.target = 'Popup_Window';
+		form.submit();
+	}
+
+
 	return {
 		initialize: initialize,
 		loadTemplate: loadTemplate,
@@ -872,12 +981,15 @@ const TaskEditor = (() => {
 		
 		openTab: openTab,
 		updateJsonTab: updateJsonTab,
+		initializeMainCode: initializeMainCode,
 		showTest: showTest,
 		addTest: addTest,
 		deleteTest: deleteTest,
 		moveUpTest: moveUpTest,
 		addOutputVariant: addOutputVariant,
-		addPatch: addPatch
+		addPatch: addPatch,
+		runTests: runTests,
+		showTestResult: showTestResult
 	}
  
 })();
