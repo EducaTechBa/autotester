@@ -146,7 +146,7 @@ class Queue {
 		$client->updateLastTime();
 		for ($i=0; $i < count($this->queue); $i++) {
 			$taskId = $this->queue[$i]['task'];
-			if (!$this->isRejectedTask($taskId, $client->id))
+			if (!$this->isRejectedTask($taskId, $client->id) && !$this->isRejected($programId, $client->id))
 				return $taskId;
 		}
 		return false;
