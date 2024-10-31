@@ -27,6 +27,16 @@ class Asan extends ExternalTool {
 			if (array_key_exists('input_file', $this->properties)) $input_file = $this->properties['input_file'];
 			$input_file = $this->test->path() . "/" . $input_file;
 			if (file_exists($input_file)) $this->result['output'] = file_get_contents($input_file);
+
+			$limit = 0;
+			if (array_key_exists('limit_output', $this->properties['environment']))
+				$limit = $this->properties['environment']['limit_output'];
+			if ($limit > 0 && strlen($this->result['output']) > $limit)
+				$this->result['output'] = substr($this->result['output'], 0, $limit);
+			$this->result['output'] = Utils::clearUnicode($this->result['output']);
+			// Remove null characters from output
+			$this->result['output'] = str_replace("\0", "", $this->result['output']);
+
 		} else {
 			parent::run();
 		}
